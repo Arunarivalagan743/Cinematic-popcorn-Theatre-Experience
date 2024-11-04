@@ -1,6 +1,3 @@
-
-
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Amaran from "../images/amaran.jpg";
@@ -29,11 +26,9 @@ const Home = () => {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:5000/movies');
-      console.log(response.data); // Log the response
       setMovies(response.data);
-      setError(null); // Reset error on successful fetch
+      setError(null);
     } catch (err) {
-      console.error(err); // Log the error
       setError('Failed to fetch movies');
     } finally {
       setLoading(false);
@@ -62,18 +57,16 @@ const Home = () => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-800 to-purple-800 text-red-500">
-        <FontAwesomeIcon icon={faExclamationTriangle} className="text-6xl mb-4" />
         <div className="text-center mt-10">
           {error}
         </div>
       </div>
     );
   }
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 to-purple-800 text-white p-4">
@@ -81,16 +74,21 @@ const Home = () => {
         <FontAwesomeIcon icon={faTheaterMasks} className="mr-2 text-yellow-300" />
         Now Showing
       </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {movies.length > 0 ? (
-          movies.map((movie) => (
+
+      {/* Sliding Movie Images Section */}
+      <div className="overflow-hidden mb-8">
+        <div className="flex space-x-4 transition-transform duration-700 ease-in-out transform">
+          {movies.map((movie, index) => (
             <div
               key={movie._id}
               className="bg-gray-800 bg-opacity-70 rounded-lg overflow-hidden relative transition-transform duration-500 hover:scale-105"
+              style={{
+                transitionDelay: `${index * 100}ms`, // Delay for staggering effect
+              }}
             >
               <div className="relative">
                 <img
-                  src={imageMap[movie.imageUrl] || 'path/to/default-image.jpg'} // Fallback image
+                  src={imageMap[movie.imageUrl] || 'path/to/default-image.jpg'}
                   alt={movie.movieName || 'Movie Poster'}
                   className="w-full h-56 object-cover opacity-80 transition-opacity duration-300 hover:opacity-100"
                 />
@@ -128,35 +126,30 @@ const Home = () => {
                   <FontAwesomeIcon icon={faDesktop} className="text-purple-400" />
                   <span className="text-purple-400">Screen:</span> {movie.screen}
                 </p>
+                <p className="flex items-center gap-2 mt-2">
+                  <FontAwesomeIcon icon={faTicketAlt} className="text-purple-400" />
+                  <span className="text-purple-400">Timing:</span> {movie.timing}
+                </p>
               </div>
               <div className="p-4 text-center">
-                <button
-                  className="bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold py-2 px-6 rounded-lg transition duration-300 transform hover:scale-110 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-pink-300"
-                  onMouseEnter={() => setShowRatingOverlay(movie._id)}
-                  onMouseLeave={() => setShowRatingOverlay(null)}
-                  // onClick={() => navigate(`/tickets/${movie.movieName}`)} 
-                >
-                <Link to = "/Tickets">Book Now</Link> 
-                </button>
+                <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>
+                  <button
+                    className="bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold py-2 px-6 rounded-lg transition duration-300 transform hover:scale-110 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-pink-300 animate-bounce"
+                    onMouseEnter={() => setShowRatingOverlay(movie._id)}
+                    onMouseLeave={() => setShowRatingOverlay(null)}
+                  >
+                    Book Now
+                  </button>
+                </Link>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="text-center text-gray-300 mt-10">No movies available.</div>
-        )}
+          ))}
+        </div>
       </div>
+
       <Footer />
     </div>
   );
 };
 
 export default Home;
-
-
-
-
-
-
-
-
-
