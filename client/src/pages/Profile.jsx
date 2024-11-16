@@ -83,7 +83,7 @@ export default function Profile() {
 
   return (
     <div className="mt-24 p-8 max-w-lg mx-auto relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-purple-900 opacity-80 transform transition duration-500 animate-fadeIn"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-800 opacity-80 transform transition duration-500 animate-fadeIn"></div>
       <div className="relative z-10 p-8 rounded-lg shadow-lg bg-white bg-opacity-90 backdrop-filter backdrop-blur-md transform transition duration-300 hover:scale-105">
         <h1 className="text-3xl font-semibold text-center my-5 text-purple-700">Profile</h1>
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>

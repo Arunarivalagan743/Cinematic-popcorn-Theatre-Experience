@@ -1,80 +1,105 @@
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
 
-// require('dotenv').config();
-// console.log("Mongo URI:", process.env.MONGO_URI);  // Verify that this outputs the MongoDB URI
+const app = express();
+const port = 3000;
 
-// const express = require('express');
-// const cors = require('cors');
-// const mongoose = require('mongoose');
+app.use(cors());
+app.use(express.json());
 
-// const app = express();
-// const PORT = process.env.PORT || 6000; // Ensure your server runs on port 3000
+const uri = 'mongodb+srv://arunarivalagan774:arunhari27@movie-mern.iuov1.mongodb.net/?retryWrites=true&w=majority&appName=movie-mern';
 
-// // Middleware
-// app.use(cors());
-// app.use(express.json());
+// Mongoose connection setup
+mongoose.connect(uri, { 
+  // useNewUrlParser: true,
+  //  useUnifiedTopology: true
+   })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch(error => console.error("MongoDB connection error:", error));
 
-// // MongoDB connection
-// mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://arunarivalagan774:arunhari27@movie-mern.iuov1.mongodb.net/?retryWrites=true&w=majority&appName=movie-mern', {
-//   // useNewUrlParser: true,
-//   // useUnifiedTopology: true,
-// })
-// .then(() => console.log('MongoDB connected'))
-// .catch(err => console.error('MongoDB connection error:', err));
+// Define your booking schema
+const bookingSchema = new mongoose.Schema({
+  movie: String,
+  screen: String,
+  timing: String,
+  seats: [String],
+  totalCost: Number,
+  parkingDetails: {
+    type: Object,
+    default: null,
+  },
+}, { timestamps: true });
 
-// // Define schema and model for ticket booking
-// const bookingSchema = new mongoose.Schema({
-//   movie: { type: String, required: true },
-//   screen: { type: String, required: true },
-//   timing: { type: String, required: true },
-//   seats: {  // This is where the seat numbers will be saved
-//     type: [String],  // Change to String to store seat numbers like 'A1', 'A2', etc.
-//     required: true,
-//   },
-//   totalCost: { type: Number, required: true },
-//   parkingDetails: {
-//     type: {
-//       parkingType: String,
-//       phone: String,
-//       vehicleNumber: String,
-//     },
-//     default: null,
-//   },
-// }, { timestamps: true });
+const Booking = mongoose.model('Booking', bookingSchema, 'Bookings');
 
+// Routes for adding movies, bookings, fetching movies, and updating movie details
+app.post('/add-movie', async (req, res) => {
+  try {
+    const movieDataArray = req.body;
+    const collection = mongoose.connection.db.collection('movies');
+    const result = await collection.insertMany(movieDataArray);
+    res.status(201).send(`Movies added with IDs: ${result.insertedIds}`);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error adding movies');
+  }
+});
 
-// const Booking = mongoose.model('Booking', bookingSchema);
+app.post('/api/checking', async (req, res) => {
+  const { movie, screen, timing, seats, totalCost, parkingDetails } = req.body;
 
-// // Test endpoint
-// app.get('/test', (req, res) => {
-//   res.send('Test endpoint is working');
-// });
+  try {
+    const booking = new Booking({
+      movie,
+      screen,
+      timing,
+      seats,
+      totalCost,
+      parkingDetails,
+    });
 
-// // Booking endpoint
-// app.post('/api/checking', async (req, res) => {
-//   const { movie, screen, timing, seats, totalCost, parkingDetails } = req.body;
+    const savedBooking = await booking.save();
+    res.status(201).json({ success: true, booking: savedBooking });
+  } catch (error) {
+    console.error('Error saving booking:', error);
+    res.status(500).json({ success: false, message: 'Failed to save booking' });
+  }
+});
 
-//   console.log('Request data:', req.body); // Log incoming request data
+app.get('/movies', async (req, res) => {
+  try {
+    const collection = mongoose.connection.db.collection('movies');
+    const movies = await collection.find({}).toArray();
+    res.status(200).json(movies);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching movies');
+  }
+});
 
-//   try {
-//     const booking = new Booking({
-//       movie,
-//       screen,
-//       timing,
-//       seats,
-//       totalCost,
-//       parkingDetails,
-//     });
+app.patch('/update-movie/:movieName', async (req, res) => {
+  try {
+    const movieName = req.params.movieName;
+    const newImageUrl = req.body.imageUrl;
+    const collection = mongoose.connection.db.collection('movies');
 
-//     const savedBooking = await booking.save();
-//     res.status(201).json({ success: true, message: 'Booking saved successfully', booking: savedBooking });
-//   } catch (error) {
-//     console.error('Error saving booking:', error);
-//     res.status(500).json({ success: false, message: 'Failed to save booking', error: error.message });
-//   }
-// });
+    const result = await collection.updateOne(
+      { movieName },
+      { $set: { imageUrl: newImageUrl } }
+    );
 
+    if (result.modifiedCount > 0) {
+      res.send(`Image URL updated for movie: ${movieName}`);
+    } else {
+      res.send(`No movie found with name: ${movieName}`);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error updating movie image URL');
+  }
+});
 
-// // Start server
-// app.listen(PORT, () => {
-//   console.log(`Server running at http://localhost:${PORT}`);
-// });
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});

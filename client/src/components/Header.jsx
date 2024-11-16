@@ -49,6 +49,10 @@ export default function Header() {
             <FaQuestionCircle className="mr-1 transition-transform duration-300 hover:scale-125 text-lg" />
             FAQ
           </li>
+          <li onClick={() => handleNavigation('/parkLot')} className="flex items-center transition duration-300 hover:text-green-300 cursor-pointer font-poppins">
+                    <FaQuestionCircle className="mr-3 " />
+                    LOT
+                  </li>
           <Link to="/profile" className="transition duration-300 hover:text-yellow-500">
             {currentUser ? (
               <img
@@ -71,7 +75,7 @@ export default function Header() {
               <div className="p-5 space-y-4">
                 <h1 className="text-xl font-extrabold text-white font-poppins">🎬 CinePop</h1>
                 <ul className="flex flex-col gap-6 text-lg">
-                  <li onClick={() => handleNavigation('/')} className="flex items-center transition duration-300 hover:text-green-300 cursor-pointer font-poppins">
+                  <li onClick={() => handleNavigation('/home')} className="flex items-center transition duration-300 hover:text-green-300 cursor-pointer font-poppins">
                     <FaHome className="mr-3 " />
                     Home
                   </li>
@@ -83,6 +87,7 @@ export default function Header() {
                     <FaQuestionCircle className="mr-3 " />
                     FAQ
                   </li>
+         
                   <Link to="/profile" className="transition duration-300 hover:text-green-300">
                     {currentUser ? (
                       <img
@@ -102,7 +107,7 @@ export default function Header() {
       </div>
 
       {/* Decorative break element */}
-      <div className="h-1 bg-gradient-to-r from-transparent to-purple-700 my-1" />
+      <div className="h-1 bg-gradient-to-r from-transparent to-purple-400 my-1" />
 
       {loading && (
         <div className="fixed inset-0 flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-800 to-purple-900 text-white z-50">

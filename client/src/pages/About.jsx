@@ -3,11 +3,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilm, faTicketAlt, faUsers } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../components/Footer'; 
 import missionImage from '../images/mission.jpg';
-import offerImage from '../images/new.jpg';
+import offerImage from '../images/join.webp';import CiniImage from '../images/cinipop.webp';
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 to-purple-800 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 text-white p-4">
       <h1 className="text-4xl font-bold mb-8 text-center text-yellow-500 tracking-wide flex items-center justify-center animate-fadeInDown">
         <FontAwesomeIcon icon={faFilm} className="mr-2 text-yellow-300 animate-bounce" />
         About Us
@@ -35,7 +35,7 @@ const About = () => {
       <div className="max-w-3xl mx-auto bg-gray-900 bg-opacity-70 rounded-lg shadow-lg p-6 mb-10 animate-slideInLeft relative overflow-hidden">
         <div className="relative w-full h-80 max-h-80 rounded-lg overflow-hidden">
           <img 
-            src={offerImage} 
+            src={CiniImage} 
             alt="What We Offer" 
             className="w-full h-full object-cover opacity-80 transform transition-transform duration-500 hover:scale-105"
           />

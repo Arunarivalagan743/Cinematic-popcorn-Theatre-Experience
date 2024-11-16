@@ -9,7 +9,7 @@
 //   body('movie').isString().withMessage('Movie is required and must be a string.'),
 //   body('screen').isString().withMessage('Screen is required and must be a string.'),
 //   body('timing').isString().withMessage('Timing is required and must be a string.'),
-//   body('seats').isArray().withMessage('Seats must be an array of strings.'),
+//   body('seats').isString().withMessage('Seats must be an array of strings.'),
 //   body('totalCost').isNumeric().withMessage('Total cost must be a number.'),
 //   body('parkingDetails').optional().isObject().withMessage('Parking details must be an object.'),
 // ], async (req, res) => {

@@ -1,14 +1,13 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDollarSign, faTimes, faCar, faPhone, faIdCard } from '@fortawesome/free-solid-svg-icons';
+import { faDollarSign, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const Tickets = () => {
   const { movie, screen, timing } = useParams();
   const navigate = useNavigate();
   const seatPrice = 3;
-  const totalSeats = 48; // 6 rows * 8 seats per row
+  const totalSeats = 96; // 6 rows * 8 seats per row
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [totalCost, setTotalCost] = useState(0);
   const [showParkingPrompt, setShowParkingPrompt] = useState(false);
@@ -39,87 +38,89 @@ const Tickets = () => {
   };
 
   const handleConfirmPayment = async () => {
-    // Validate parking information if the user wants parking
     if (wantsParking === "yes" && (!parkingType || !phone || !vehicleNumber)) {
       setErrors({ ...errors, parking: "All parking details are mandatory." });
       return;
     }
-    
+  
     const actualSeats = selectedSeats.map(index => {
       const row = rowLabels[Math.floor(index / 8)];
       const seatNumber = (index % 8) + 1;
       return `${row}${seatNumber}`;
     });
-
+  
     const bookingData = {
       movie,
       screen,
       timing,
       seats: actualSeats,
       totalCost,
-      email: localStorage.getItem('userEmail'),  // Assuming email is stored in localStorage
       parkingDetails: wantsParking === "yes" ? {
         parkingType,
         phone,
         vehicleNumber,
       } : null,
     };
-
+  
     try {
-      const token = localStorage.getItem('jwtToken'); // Get the actual token
+      const token = localStorage.getItem('jwtToken');
       if (!token) {
         setErrors({ ...errors, token: 'Token not found. Please log in again.' });
         return;
       }
-
-      const response = await fetch('/api/checking', {
+  
+      const response = await fetch('/api/booking/test-booking', {  // Ensure this path is correct
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Correct token header
+          'Authorization': `Bearer ${token}`,  // Authorization header with JWT token
         },
         body: JSON.stringify(bookingData),
-        credentials: 'include', 
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         setErrors({ ...errors, server: errorData.message });
         return;
       }
-
-      // Redirect to either parkLot or payment page depending on parking choice
+  
+      // Redirect to the appropriate page based on parking selection
       navigate(wantsParking === "yes" ? '/parkLot' : '/payment');
     } catch (error) {
       setErrors({ ...errors, network: 'Network error: Failed to connect to server.' });
     }
   };
 
-
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 to-purple-800 text-white p-4 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 text-white p-4 lg:p-8">
       <h1 className="text-3xl font-bold text-center text-yellow-500 mb-6">
         {movie} - Screen {screen} - {timing}
       </h1>
 
-      {/* Seat Selection */}
-      <div className="grid grid-cols-8 gap-3 mx-auto max-w-2xl">
+      {/* Movie Screen Visualization */}
+      <div className="flex justify-center mb-4">
+        <div className="bg-gray-800 text-white w-full text-center p-2 rounded-lg shadow-lg font-semibold">
+          <p className="text-xl">Movie Screen</p>
+        </div>
+      </div>
+
+      {/* Responsive Seat Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3 mx-auto max-w-full">
         {seatStatuses.map((isAvailable, index) => {
           const row = rowLabels[Math.floor(index / 8)];
           const seatNumber = (index % 8) + 1;
           return (
             <div
               key={index}
-              className={`cursor-pointer flex items-center justify-center p-4 rounded-lg 
+              className={`cursor-pointer flex items-center justify-center p-3 rounded-lg
                 ${selectedSeats.includes(index) ? 'bg-green-500 text-white' : 
                   isAvailable ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 
                   'bg-red-600 text-gray-300 cursor-not-allowed'}
-                transition duration-300 transform hover:scale-105`}
-              style={{ width: '50px', height: '50px' }}
+                transition-transform duration-300 ease-in-out transform hover:scale-110 hover:rotate-3`}
+              style={{ width: '45px', height: '45px' }}
               onClick={() => handleSeatSelection(index)}
             >
-              <span className="block text-sm font-semibold">{row}{seatNumber}</span>
+              <span className="text-sm font-semibold">{row}{seatNumber}</span>
             </div>
           );
         })}
@@ -139,83 +140,92 @@ const Tickets = () => {
         )}
       </div>
 
-      {/* Parking Assistance Prompt */}
       {showParkingPrompt && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-80 flex items-center justify-center">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-8 rounded-lg text-white max-w-lg w-full relative transition-transform transform hover:scale-105">
-            <button
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-100"
-              onClick={() => setShowParkingPrompt(false)}
-            >
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
-            <h2 className="text-xl mb-4">Parking Assistance</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block mb-2 text-sm">Do you want parking?</label>
-                <div className="flex items-center gap-4">
-                  <button
-                    className="bg-green-500 py-2 px-4 rounded-lg"
-                    onClick={() => setWantsParking("yes")}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    className="bg-red-500 py-2 px-4 rounded-lg"
-                    onClick={() => setWantsParking("no")}
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-
-              {wantsParking === "yes" && (
-                <>
-                  <div>
-                    <label className="block mb-2 text-sm">Parking Type</label>
-                    <select
-                      value={parkingType}
-                      onChange={(e) => setParkingType(e.target.value)}
-                      className="w-full p-2 bg-gray-700 text-white rounded-lg"
-                    >
-                      <option value="">Select Type</option>
-                      <option value="Two Wheeler">Two Wheeler</option>
-                      <option value="Four Wheeler">Four Wheeler</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm">Phone Number</label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full p-2 bg-gray-700 text-white rounded-lg"
-                      placeholder="Phone Number"
-                      maxLength={10}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm">Vehicle Number</label>
-                    <input
-                      type="text"
-                      value={vehicleNumber}
-                      onChange={(e) => setVehicleNumber(e.target.value)}
-                      className="w-full p-2 bg-gray-700 text-white rounded-lg"
-                      placeholder="Vehicle Number"
-                    />
-                  </div>
-                </>
-              )}
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-80 flex items-center justify-center p-4 sm:p-8 animate__animated animate__fadeIn">
+          <div className="bg-white text-black rounded-lg shadow-xl p-6 max-w-lg w-full animate__animated animate__zoomIn">
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-semibold">Parking Details</h3>
+              <FontAwesomeIcon
+                icon={faTimes}
+                className="cursor-pointer text-2xl"
+                onClick={() => setShowParkingPrompt(false)}
+              />
             </div>
 
-            <button
-              onClick={handleConfirmPayment}
-              className="mt-4 bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 px-6 rounded-lg font-bold transition duration-300 transform hover:bg-blue-300"
-            >
-              Confirm Booking
-            </button>
+            <div className="mt-4">
+              <label className="block text-lg">Do you want parking?</label>
+              <div className="flex items-center mt-2">
+                <label className="mr-4">
+                  <input
+                    type="radio"
+                    name="parking"
+                    value="yes"
+                    onChange={() => setWantsParking("yes")}
+                  />{" "}
+                  Yes
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="parking"
+                    value="no"
+                    onChange={() => setWantsParking("no")}
+                    defaultChecked
+                  />{" "}
+                  No
+                </label>
+              </div>
+            </div>
+
+            {wantsParking === "yes" && (
+              <div className="mt-4">
+                <label className="block text-lg">Parking Type</label>
+                <select
+                  className="w-full mt-2 p-2 border border-gray-300 rounded-md"
+                  value={parkingType}
+                  onChange={(e) => setParkingType(e.target.value)}
+                >
+                  <option value="">Select Parking Type</option>
+                  <option value="Two-Wheeler">Two-Wheeler</option>
+                  <option value="Four-Wheeler">Four-Wheeler</option>
+                </select>
+                <div className="mt-4">
+                  <label className="block text-lg">Phone Number</label>
+                  <input
+                    type="text"
+                    className="w-full mt-2 p-2 border border-gray-300 rounded-md"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    maxLength="10"
+                    placeholder="Enter your 10-digit phone number"
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-lg">Vehicle Number</label>
+                  <input
+                    type="text"
+                    className="w-full mt-2 p-2 border border-gray-300 rounded-md"
+                    value={vehicleNumber}
+                    onChange={(e) => setVehicleNumber(e.target.value)}
+                    placeholder="Enter your vehicle number"
+                  />
+                </div>
+
+                {errors.parking && (
+                  <p className="text-red-500 text-sm mt-2">{errors.parking}</p>
+                )}
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                className="bg-blue-500 text-white py-2 px-6 rounded-md font-semibold"
+                onClick={handleConfirmPayment}
+              >
+                Confirm Booking
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -17,7 +17,7 @@ const Footer = () => {
   // }, []);
 
   return (
-    <footer className="bg-gradient-to-r from-gray-900 to-purple-900 text-white py-8 mt-10 transition-transform duration-500 ease-in-out transform hover:scale-105">
+    <footer className="bg-gradient-to-r from-gray-900 text-white py-8 mt-10 transition-transform duration-500 ease-in-out transform hover:scale-105">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <div className="text-center md:text-left">
@@ -52,25 +52,25 @@ const Footer = () => {
           <div>
             <h3 className="font-bold mb-2 transition-transform duration-500 hover:scale-110">About Us</h3>
             <ul>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">Our Story</a></li>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">Careers</a></li>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">Contact Us</a></li>
+              <li><a href="/about" className="hover:text-yellow-400 transition duration-300">Our Story</a></li>
+              <li><a href="/about" className="hover:text-yellow-400 transition duration-300">Careers</a></li>
+              <li><a href="/about" className="hover:text-yellow-400 transition duration-300">Contact Us</a></li>
             </ul>
           </div>
           <div>
             <h3 className="font-bold mb-2 transition-transform duration-500 hover:scale-110">Help</h3>
             <ul>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">FAQs</a></li>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">Support</a></li>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">Privacy Policy</a></li>
+              <li><a href="/faq" className="hover:text-yellow-400 transition duration-300">FAQs</a></li>
+              <li><a href="/faq" className="hover:text-yellow-400 transition duration-300">Support</a></li>
+              <li><a href="/faq" className="hover:text-yellow-400 transition duration-300">Privacy Policy</a></li>
             </ul>
           </div>
           <div>
             <h3 className="font-bold mb-2 transition-transform duration-500 hover:scale-110">Movies</h3>
             <ul>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">Now Showing</a></li>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">Coming Soon</a></li>
-              <li><a href="#" className="hover:text-yellow-400 transition duration-300">Popular Movies</a></li>
+              <li><a href="/Home" className="hover:text-yellow-400 transition duration-300">Now Showing</a></li>
+              <li><a href="/" className="hover:text-yellow-400 transition duration-300">Coming Soon</a></li>
+              <li><a href="/" className="hover:text-yellow-400 transition duration-300">Popular Movies</a></li>
             </ul>
           </div>
         </div>
