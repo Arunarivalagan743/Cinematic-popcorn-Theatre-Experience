@@ -7,7 +7,7 @@ const Tickets = () => {
   const { movie, screen, timing } = useParams();
   const navigate = useNavigate();
   const seatPrice = 3;
-  const totalSeats = 96; // 6 rows * 8 seats per row
+  const totalSeats = 84; // 6 rows * 8 seats per row
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [totalCost, setTotalCost] = useState(0);
   const [showParkingPrompt, setShowParkingPrompt] = useState(false);
@@ -37,6 +37,59 @@ const Tickets = () => {
     }
   };
 
+  // const handleConfirmPayment = async () => {
+  //   if (wantsParking === "yes" && (!parkingType || !phone || !vehicleNumber)) {
+  //     setErrors({ ...errors, parking: "All parking details are mandatory." });
+  //     return;
+  //   }
+  
+  //   const actualSeats = selectedSeats.map(index => {
+  //     const row = rowLabels[Math.floor(index / 8)];
+  //     const seatNumber = (index % 8) + 1;
+  //     return `${row}${seatNumber}`;
+  //   });
+  
+  //   const bookingData = {
+  //     movie,
+  //     screen,
+  //     timing,
+  //     seats: actualSeats,
+  //     totalCost,
+  //     parkingDetails: wantsParking === "yes" ? {
+  //       parkingType,
+  //       phone,
+  //       vehicleNumber,
+  //     } : null,
+  //   };
+  
+  //   try {
+  //     const token = localStorage.getItem('jwtToken');
+  //     if (!token) {
+  //       setErrors({ ...errors, token: 'Token not found. Please log in again.' });
+  //       return;
+  //     }
+  
+  //     const response = await fetch('/api/booking/test-booking', {  // Ensure this path is correct
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${token}`,  // Authorization header with JWT token
+  //       },
+  //       body: JSON.stringify(bookingData),
+  //     });
+  
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       setErrors({ ...errors, server: errorData.message });
+  //       return;
+  //     }
+  
+  //     // Redirect to the appropriate page based on parking selection
+  //     navigate(wantsParking === "yes" ? '/parkLot' : '/payment');
+  //   } catch (error) {
+  //     setErrors({ ...errors, network: 'Network error: Failed to connect to server.' });
+  //   }
+  // };
   const handleConfirmPayment = async () => {
     if (wantsParking === "yes" && (!parkingType || !phone || !vehicleNumber)) {
       setErrors({ ...errors, parking: "All parking details are mandatory." });
@@ -63,7 +116,7 @@ const Tickets = () => {
     };
   
     try {
-      const token = localStorage.getItem('jwtToken');
+      const token = localStorage.getItem('jwtToken');  // Make sure token is stored in localStorage
       if (!token) {
         setErrors({ ...errors, token: 'Token not found. Please log in again.' });
         return;
@@ -90,7 +143,7 @@ const Tickets = () => {
       setErrors({ ...errors, network: 'Network error: Failed to connect to server.' });
     }
   };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 text-white p-4 lg:p-8">
       <h1 className="text-3xl font-bold text-center text-yellow-500 mb-6">

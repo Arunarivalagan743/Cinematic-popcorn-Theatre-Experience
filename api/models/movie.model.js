@@ -30,7 +30,7 @@ const movieSchema = new mongoose.Schema({
     required: true,
   },
   imageUrl: {
-    type: String, // This could be a path or URL to an image
+    type: String, 
     required: true,
   },
   ratings: {

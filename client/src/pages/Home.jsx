@@ -22,10 +22,25 @@ const Home = () => {
     'new.jpg': NewMovie,
   };
 
+  // const fetchMovies = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await axios.get('http://localhost:5000/movies');
+  //     setMovies(response.data);
+  //     setError(null);
+  //   } catch (err) {
+  //     setError('Failed to fetch movies');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
   const fetchMovies = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/movies');
+      // Use a relative URL for the API request
+      const response = await axios.get('api/movies'); 
       setMovies(response.data);
       setError(null);
     } catch (err) {
@@ -34,7 +49,7 @@ const Home = () => {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchMovies();
   }, []);
