@@ -22,25 +22,13 @@ const Home = () => {
     'new.jpg': NewMovie,
   };
 
-  // const fetchMovies = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await axios.get('http://localhost:5000/movies');
-  //     setMovies(response.data);
-  //     setError(null);
-  //   } catch (err) {
-  //     setError('Failed to fetch movies');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
+ 
 
   const fetchMovies = async () => {
     setLoading(true);
     try {
       // Use a relative URL for the API request
-      const response = await axios.get('api/movies'); 
+      const response = await axios.get('/api/movies'); 
       setMovies(response.data);
       setError(null);
     } catch (err) {
@@ -139,7 +127,8 @@ const Home = () => {
               </p>
             </div>
             <div className="p-4 text-center">
-              <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>
+            <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>
+
                 <button
                   className="bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold py-2 px-4 md:px-6 rounded-lg transition duration-300 transform hover:scale-110 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-pink-300 animate-bounce"
                   onMouseEnter={() => setShowRatingOverlay(movie._id)}

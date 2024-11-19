@@ -4,10 +4,11 @@ import Movie from '../models/movie.model.js';  // Movie schema
 const router = express.Router();
 
 // GET route to fetch all movies
+// GET route to fetch all movies
 router.get('/', async (req, res) => {
   try {
     const movies = await Movie.find();  // Fetch all movies from MongoDB
-    res.status(200).json(movies);
+    res.status(200).json(movies);  // Sending the movies data as a response
   } catch (err) {
     console.error('Error fetching movies:', err);
     res.status(500).json({ message: 'Failed to fetch movies', error: err });
