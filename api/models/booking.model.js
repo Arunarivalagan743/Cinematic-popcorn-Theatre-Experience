@@ -22,10 +22,7 @@ const bookingSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    // email: {
-    //   type: String,
-    //   required: true,
-    // },
+   
     parkingDetails: {
       parkingType: {
         type: String,

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaMotorcycle, FaCar } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
 
 const ParkLot = () => {
   const totalTwoWheelerSpots = 20;
@@ -8,10 +9,16 @@ const ParkLot = () => {
   // State to track booked spots for both types
   const [bookedTwoWheelerSpots, setBookedTwoWheelerSpots] = useState(new Array(totalTwoWheelerSpots).fill(false));
   const [bookedFourWheelerSpots, setBookedFourWheelerSpots] = useState(new Array(totalFourWheelerSpots).fill(false));
-  
+
   // Selected spots for both two-wheeler and four-wheeler
   const [selectedTwoWheelerSpot, setSelectedTwoWheelerSpot] = useState(null);
   const [selectedFourWheelerSpot, setSelectedFourWheelerSpot] = useState(null);
+
+  // State to track if the user has confirmed the booking
+  const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
+
+  // Navigate hook for redirection
+  const navigate = useNavigate();
 
   // Function to handle spot booking for two-wheelers
   const handleTwoWheelerSelection = (index) => {
@@ -31,6 +38,13 @@ const ParkLot = () => {
 
   const getCost = (type) => {
     return type === 'Two-Wheeler' ? 10 : 20; // Two-Wheeler cost is 10, Four-Wheeler cost is 20
+  };
+
+  // Handle confirm booking action and redirect to payment page
+  const handleConfirmBooking = () => {
+    setIsBookingConfirmed(true);
+    // Redirect to payment page
+    navigate('/payment'); // Assuming '/payment' is the route to the payment page
   };
 
   return (
@@ -117,6 +131,16 @@ const ParkLot = () => {
           </p>
         ) : (
           <p className="text-xl text-gray-400">No spots selected yet.</p>
+        )}
+
+        {/* Confirm Payment Button */}
+        {(selectedTwoWheelerSpot || selectedFourWheelerSpot) && !isBookingConfirmed && (
+          <button
+            onClick={handleConfirmBooking}
+            className="mt-6 bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-lg transition duration-300"
+          >
+            Confirm Payment
+          </button>
         )}
       </div>
     </div>
