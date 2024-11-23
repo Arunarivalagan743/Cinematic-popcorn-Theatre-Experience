@@ -1,12 +1,17 @@
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import Amaran from "../images/amaran.jpg";
 import Brother from "../images/brother.jpg";
 import NewMovie from "../images/new.jpg";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar, faFilm, faLanguage, faTicketAlt, faTheaterMasks, faDesktop } from '@fortawesome/free-solid-svg-icons';
+import { faStar, faFilm, faTheaterMasks, faTicketAlt, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../components/Footer';
 import { Link, useNavigate } from 'react-router-dom';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const Home = () => {
   const [movies, setMovies] = useState([]);
@@ -22,13 +27,10 @@ const Home = () => {
     'new.jpg': NewMovie,
   };
 
- 
-
   const fetchMovies = async () => {
     setLoading(true);
     try {
-      // Use a relative URL for the API request
-      const response = await axios.get('/api/movies'); 
+      const response = await axios.get('/api/movies');
       setMovies(response.data);
       setError(null);
     } catch (err) {
@@ -37,14 +39,33 @@ const Home = () => {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchMovies();
   }, []);
 
+  // Function to show SweetAlert popup with only movie name and screen number
+  const showMovieDetails = (movie) => {
+    MySwal.fire({
+      title: `<strong>${movie.name}</strong>`,
+      html: `
+        <p><strong>Genre:</strong> ${movie.genre}</p>
+        <p><strong>Cast:</strong> ${movie.cast}</p>
+        <p><strong>Summary:</strong> ${movie.summary}</p>
+      `,
+      background: 'linear-gradient(to right, #1a1a1d, #4e4e50)',
+      color: '#fff',
+      icon: 'info',
+      confirmButtonText: 'Close',
+      customClass: {
+        popup: 'animated fadeIn',
+      },
+    });
+  };
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-800 text-white">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-800 to-black text-white">
         <div className="flex items-center space-x-4 mb-4">
           <FontAwesomeIcon icon={faTicketAlt} className="text-6xl animate-spin" />
           <h1 className="text-3xl font-semibold">Cinematic Popcorn Park</h1>
@@ -58,7 +79,7 @@ const Home = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-800 text-red-500">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-800 to-black text-red-500">
         <div className="text-center mt-10">
           {error}
         </div>
@@ -67,70 +88,51 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br text-white p-4">
       <h1 className="text-3xl lg:text-4xl font-bold mb-8 text-center text-yellow-500 tracking-wide flex items-center justify-center">
         <FontAwesomeIcon icon={faTheaterMasks} className="mr-2 text-yellow-300" />
         Now Showing
       </h1>
-
-      <div className="flex flex-col md:flex-row md:flex-wrap md:justify-center items-center gap-4 mb-8">
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {movies.map((movie) => (
           <div
             key={movie._id}
-            className="bg-gray-800 bg-opacity-70 rounded-lg overflow-hidden relative transition-transform duration-500 hover:scale-105 w-full md:w-1/2 lg:w-1/3 xl:w-1/4"
+            className="relative group bg-gray-900 rounded-lg overflow-hidden shadow-lg"
           >
-            <div className="relative w-full h-90 overflow-hidden group">
+            <div
+              className="relative w-full h-64 overflow-hidden cursor-pointer"
+              onClick={() => showMovieDetails(movie)}
+            >
               <img
                 src={imageMap[movie.imageUrl] || 'path/to/default-image.jpg'}
-                alt={movie.movieName || 'Movie Poster'}
+                alt={movie.name || 'Movie Poster'}
                 className="w-full h-full object-cover object-center opacity-80 transition-opacity duration-300 group-hover:opacity-50"
               />
 
-              {/* Summary Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                <div className="text-center p-4 text-white text-xs md:text-sm lg:text-base">
-                  <h3 className="font-bold mb-2">Summary</h3>
-                  <p className="animate-fade-in">{movie.summary}</p>
-                </div>
-              </div>
-              {showRatingOverlay === movie._id && (
-                <div className="absolute top-4 right-4 bg-yellow-500 text-black font-bold py-1 px-2 md:px-4 rounded-full transform rotate-6 shadow-md">
+              {/* Combined Rating and Votes Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-80 flex gap-2 items-center p-2">
+                <div className="flex items-center text-yellow-500 font-bold">
                   <FontAwesomeIcon icon={faStar} className="mr-1" />
                   {movie.ratings}
                 </div>
-              )}
+                <div className="flex items-center text-blue-500 font-bold">
+                  <FontAwesomeIcon icon={faThumbsUp} className="mr-1" />
+                  {movie.votes} Votes
+                </div>
+              </div>
             </div>
-            <div className="p-4 md:p-6 text-gray-300 text-sm md:text-base">
-              <p className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faFilm} className="text-purple-400" />
-                <span className="text-orange-400">Name:</span> {movie.name}
-              </p>
-              <p className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faFilm} className="text-purple-400" />
-                <span className="text-purple-400">Genre:</span> {movie.genre}
-              </p>
-              <p className="flex items-center gap-2 mt-2">
-                <FontAwesomeIcon icon={faLanguage} className="text-purple-400" />
-                <span className="text-purple-400">Language:</span> {movie.language}
-              </p>
-              <p className="flex items-center gap-2 mt-2">
-                <FontAwesomeIcon icon={faTicketAlt} className="text-purple-400" />
-                <span className="text-purple-400">Cast:</span> {movie.cast}
-              </p>
-              <p className="flex items-center gap-2 mt-2">
-                <FontAwesomeIcon icon={faDesktop} className="text-purple-400" />
-                <span className="text-purple-400">Screen:</span> {movie.screen}
-              </p>
-              <p className="flex items-center gap-2 mt-2">
-                <FontAwesomeIcon icon={faTicketAlt} className="text-purple-400" />
-                <span className="text-purple-400">Timing:</span> {movie.timing}
-              </p>
-            </div>
-            <div className="p-4 text-center">
-            <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>
 
+            <div className="p-4 text-center text-gray-300 text-sm md:text-base">
+              <p className="text-lg font-semibold text-orange-400">{movie.name}</p>
+              <p className="text-sm text-purple-400">Screen: {movie.screen}</p>
+              <p className="text-sm text-green-400">Language: {movie.language}</p>
+            </div>
+
+            <div className="p-4 text-center mt-auto">
+              <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>
                 <button
-                  className="bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold py-2 px-4 md:px-6 rounded-lg transition duration-300 transform hover:scale-110 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-pink-300 animate-bounce"
+                  className="bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold py-2 px-4 md:px-6 rounded-lg transition duration-300 transform hover:scale-110 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-pink-300"
                   onMouseEnter={() => setShowRatingOverlay(movie._id)}
                   onMouseLeave={() => setShowRatingOverlay(null)}
                 >

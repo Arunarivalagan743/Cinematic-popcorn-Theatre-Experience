@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 
 // POST route to add a new movie
 router.post('/', async (req, res) => {
-  const { name, genre, language, cast, screen, timing, summary, imageUrl, ratings } = req.body;
+  const { name, genre, language, cast, screen, timing, summary, imageUrl, ratings,votes } = req.body;
 
   try {
     const newMovie = new Movie({
@@ -30,6 +30,7 @@ router.post('/', async (req, res) => {
       summary,
       imageUrl,
       ratings,
+      votes,
     });
     await newMovie.save();
     res.status(201).json({ message: 'Movie added successfully', movie: newMovie });

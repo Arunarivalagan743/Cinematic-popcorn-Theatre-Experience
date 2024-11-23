@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+.seat-platinum {
+    background-color: #1e90ff;
+  }
+  
+  .seat-gold {
+    background-color: #ffd700;
+  }
+  
+  .seat-silver {
+    background-color: #c0c0c0;
+  }
+  
+  .seat-balcony {
+    background-color: #9370db;
+  }
+  

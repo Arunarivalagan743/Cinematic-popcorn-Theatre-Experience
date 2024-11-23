@@ -7,7 +7,9 @@ import cookieParser from 'cookie-parser';
 import userRoutes from './routes/user.route.js';
 import authRoutes from './routes/auth.route.js';
 import movieRoutes from './routes/movie.route.js'; 
-import bookingRoutes from './routes/booking.route.js'; // Import booking routes
+import bookingRoutes from './routes/bookingRoutes.js';
+import confirmPaymentRoutes from './routes/confirmPaymentRoutes.js';   // Include `.js` extension
+ // Import booking routes
 
 
 dotenv.config();
@@ -36,8 +38,9 @@ app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
 
 app.use('/api/movies', movieRoutes);
-
-app.use('/api/booking', bookingRoutes); // Use booking route
+app.use('/api', bookingRoutes);
+app.use('/api', confirmPaymentRoutes);
+// app.use('/api/booking', bookingRoutes); // Use booking route
 
 // Global error handler
 app.use((err, req, res, next) => {

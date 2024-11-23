@@ -36,6 +36,9 @@ const movieSchema = new mongoose.Schema({
   ratings: {
     type: Number,
     required: true,
+  }, votes: {
+    type: String,
+    default: 0, // Initialize likes to 0
   },
 });
 

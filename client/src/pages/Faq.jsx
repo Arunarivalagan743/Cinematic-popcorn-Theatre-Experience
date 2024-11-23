@@ -46,7 +46,7 @@ const FAQ = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900  to-gray-700 text-white p-4 font-sans">
+    <div className="min-h-screen bg-gradient-to-br text-white p-4 font-sans">
       <div className="text-center mb-8">
         <button
           className={`px-4 py-2 font-semibold rounded-lg ${

@@ -129,13 +129,7 @@ export default function Profile() {
           </button>
         </form>
         <div className="flex justify-between mt-6">
-          <span
-            onClick={handleDeleteAccount}
-            className="flex items-center text-red-600 cursor-pointer hover:text-red-500 transition duration-300"
-          >
-            <FaTrashAlt className="mr-1" />
-            Delete Account
-          </span>
+         
           <span
             onClick={handleSignOut}
             className="flex items-center text-purple-700 cursor-pointer hover:text-purple-500 transition duration-300"

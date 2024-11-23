@@ -1,9 +1,9 @@
-import Movie from '../models/movie'; // Ensure this is the correct path
+import Movie from '../models/movie.model.js'; // Ensure this is the correct path
 
 // Controller to handle POST request to create a movie
 export const createMovie = async (req, res) => {
   try {
-    const { name, genre, language, cast, screen, timing, summary, imageUrl, ratings } = req.body;
+    const { name, genre, language, cast, screen, timing, summary, imageUrl, ratings,votes } = req.body;
     
     // Create a new movie object
     const newMovie = new Movie({
@@ -16,6 +16,7 @@ export const createMovie = async (req, res) => {
       summary,
       imageUrl,
       ratings,
+      votes,
     });
 
     // Save the new movie to the database

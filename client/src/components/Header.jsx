@@ -110,7 +110,7 @@ export default function Header() {
       <div className="h-1 bg-gradient-to-r from-transparent to-purple-400 my-1" />
 
       {loading && (
-        <div className="fixed inset-0 flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-800 to-purple-900 text-white z-50">
+        <div className="fixed inset-0 flex flex-col items-center justify-center min-h-screen bg-gradient-to-br text-white z-50">
           <div className="flex items-center space-x-4 mb-4 animate-bounce">
             <FaTicketAlt className="text-4xl md:text-6xl animate-spin" />
             <h1 className="text-2xl md:text-3xl font-semibold font-poppins">Cine Pop</h1>
