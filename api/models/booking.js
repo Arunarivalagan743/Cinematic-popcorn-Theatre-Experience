@@ -14,7 +14,7 @@ const bookingSchema = new mongoose.Schema({
     },
     parkingCost: { type: Number, required: false },
   },
-  userEmail: { type: String, required: false },  // Store the email associated with the user
+  currentUser: { type: String, required: false },  // Store the email associated with the user
 }, { timestamps: true });
 
 const Booking = mongoose.model('Booking', bookingSchema);

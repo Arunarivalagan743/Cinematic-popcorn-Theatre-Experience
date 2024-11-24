@@ -17,6 +17,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const jwtSecret = process.env.JWT_SECRET;
+
+
+
 console.log('JWT Secret:', process.env.JWT_SECRET); // Should print your secret
 
 // Middleware

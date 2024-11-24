@@ -6,6 +6,7 @@ const confirmPaymentSchema = new mongoose.Schema({
   timing: { type: String, required: true },
   seats: [{ type: String, required: true }],
   totalCost: { type: Number, required: true },
+  currentUser: { type: String, required: false },
   parkingDetails: {
     parkingType: { type: String },
     selectedSlot: { type: String },
