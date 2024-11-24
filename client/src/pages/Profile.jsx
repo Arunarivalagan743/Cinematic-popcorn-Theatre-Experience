@@ -22,7 +22,7 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    setUpdateSuccess(false); // Reset success message when component mounts
+    setUpdateSuccess(false); 
   }, []);
 
   const handleChange = (e) => {

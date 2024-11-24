@@ -17,7 +17,7 @@ const Payment = () => {
   const navigate = useNavigate();  // Hook to navigate after payment
 
   // Define parking costs
-  const twoWheelerCost = 20; // Cost for Two-Wheeler parking
+  const twoWheelerCost = 20;
   const fourWheelerCost = 30; // Cost for Four-Wheeler parking
 
   useEffect(() => {

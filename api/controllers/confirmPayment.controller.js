@@ -48,7 +48,7 @@ export const confirmPayment = async (req, res) => {
   try {
     const { bookingData } = req.body;
 
-    // Create a new booking document and save it to the database
+    
     const newBooking = new Booking({
       movie: bookingData.movie,
       screen: bookingData.screen,

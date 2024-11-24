@@ -16,7 +16,6 @@ const confirmPaymentSchema = new mongoose.Schema({
   paymentStatus: { type: String, required: true }  // 'confirmed' or 'pending'
 });
 
-// Check if the model is already defined to prevent overwriting
 const ConfirmPayment = mongoose.models.ConfirmPayment || mongoose.model('ConfirmPayment', confirmPaymentSchema);
 
 export default ConfirmPayment;

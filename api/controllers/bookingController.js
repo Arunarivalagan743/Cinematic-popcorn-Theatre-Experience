@@ -24,7 +24,6 @@ export const createBooking = async (req, res) => {
   }
 };
 
-// Get all bookings (for admin or user)
 export const getBookings = async (req, res) => {
   try {
     const bookings = await Booking.find().populate('userEmail');  // You may want to populate the user's data
