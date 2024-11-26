@@ -141,7 +141,7 @@ const Payment = () => {
             )}
 
             <div className="mt-8">
-              <h2 className="text-2xl font-bold">Total Amount: ${totalAmount}</h2>
+              <h2 className="text-2xl font-bold">Total Amount: ${bookingData.totalCost || 0}</h2>
             </div>
 
             <div className="mt-8">

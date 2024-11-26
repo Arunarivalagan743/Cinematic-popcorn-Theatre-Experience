@@ -49,10 +49,7 @@ export default function Header() {
             <FaQuestionCircle className="mr-1 transition-transform duration-300 hover:scale-125 text-lg" />
             FAQ
           </li>
-          <li onClick={() => handleNavigation('/parkLot')} className="flex items-center transition duration-300 hover:text-green-300 cursor-pointer font-poppins">
-                    <FaQuestionCircle className="mr-3 " />
-                    LOT
-                  </li>
+          
           <Link to="/profile" className="transition duration-300 hover:text-yellow-500">
             {currentUser ? (
               <img

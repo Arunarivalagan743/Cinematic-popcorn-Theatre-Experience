@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faQuestionCircle, faChevronDown, faEnvelope, faPhone, faMapMarkerAlt, faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faChevronDown, faEnvelope, faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
 import Footer from '../components/Footer';
 
 const FAQ = () => {
   const [openFAQ, setOpenFAQ] = useState(null);
   const [activeTab, setActiveTab] = useState("faq");
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [questionData, setQuestionData] = useState({ userQuestion: '', userEmail: '' });
 
   const faqs = [
     {
@@ -39,10 +41,28 @@ const FAQ = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleQuestionChange = (e) => {
+    setQuestionData({ ...questionData, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Thank you for reaching out! We'll get back to you soon.");
-    setFormData({ name: '', email: '', message: '' });
+    // Replace the API call with a success message
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Your message has been sent!',
+    });
+  };
+
+  const handleQuestionSubmit = (e) => {
+    e.preventDefault();
+    // Replace the API call with a success message
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Your question has been submitted!',
+    });
   };
 
   return (
@@ -98,6 +118,42 @@ const FAQ = () => {
               </div>
             ))}
           </div>
+
+          {/* Ask a Question Form */}
+          <div className="max-w-2xl mx-auto mt-12 space-y-4">
+            <h2 className="text-2xl font-semibold text-center text-yellow-500">Ask a Question</h2>
+            <form onSubmit={handleQuestionSubmit} className="space-y-4 bg-gradient-to-br from-gray-800 p-6 rounded-lg shadow-lg">
+              <div>
+                <label className="block text-gray-300 text-lg font-semibold">Your Email</label>
+                <input
+                  type="email"
+                  name="userEmail"
+                  value={questionData.userEmail}
+                  onChange={handleQuestionChange}
+                  className="w-full mt-2 p-2 rounded bg-gray-700 bg-opacity-80 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 text-lg font-semibold">Your Question</label>
+                <textarea
+                  name="userQuestion"
+                  value={questionData.userQuestion}
+                  onChange={handleQuestionChange}
+                  className="w-full mt-2 p-2 rounded bg-gray-700 bg-opacity-80 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                  rows="4"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none"
+              >
+                <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
+                Submit Question
+              </button>
+            </form>
+          </div>
         </div>
       )}
 
@@ -138,33 +194,22 @@ const FAQ = () => {
                   value={formData.message}
                   onChange={handleChange}
                   className="w-full mt-2 p-2 rounded bg-gray-700 bg-opacity-80 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
-                  rows="5"
+                  rows="4"
                   required
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none"
+                className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none"
               >
                 <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
                 Send Message
               </button>
             </form>
-
-            <div className="text-center text-gray-300 space-y-2">
-              <p className="flex items-center justify-center gap-2">
-                <FontAwesomeIcon icon={faPhone} className="text-yellow-400" />
-                +1 (234) 567-890
-              </p>
-              <p className="flex items-center justify-center gap-2">
-                <FontAwesomeIcon icon={faMapMarkerAlt} className="text-yellow-400" />
-                123 Movie Street, Cinecity
-              </p>
-            </div>
           </div>
         </div>
       )}
-      
+
       <Footer />
     </div>
   );
