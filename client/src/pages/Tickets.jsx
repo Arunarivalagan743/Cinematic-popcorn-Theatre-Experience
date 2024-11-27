@@ -152,6 +152,11 @@ const Tickets = () => {
           phone,
           vehicleNumbers,
           parkingCost,
+          parkingType: parkingNeeded ? (selectedTwoWheelerSlots.length ? "Two-Wheeler" : "Four-Wheeler") : "N/A",
+          selectedSlot: {
+            twoWheeler: selectedTwoWheelerSlots.join(", "),
+            fourWheeler: selectedFourWheelerSlots.join(", "),
+          }
         }
       : null;
 
@@ -275,135 +280,114 @@ const Tickets = () => {
                 onClick={() => handleSeatSelection(index)}
                 title={`Row: ${row}, Seat: ${seatNumber}`}
               >
-                {`${row}${seatNumber}`}
+                                {`${row}${seatNumber}`}
               </div>
             );
           })}
         </div>
       </div>
 
+      {/* Parking Assistance Section */}
+      {showParkingPrompt && (
+        <div className="parking-section w-full md:w-3/4 lg:w-1/2 mt-8 p-6 border rounded shadow-md bg-gray-100">
+          <h2 className="text-xl font-bold mb-4 text-center">Parking Assistance</h2>
+          <div className="mb-4">
+            <label className="block font-semibold mb-2 text-gray-700">
+              Phone Number
+              <input
+                type="tel"
+                value={phone}
+                onChange={handlePhoneNumberChange}
+                className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300"
+                placeholder="Enter 10-digit phone number"
+              />
+            </label>
+          </div>
 
-
-
-
-
-{showParkingPrompt && (
-  <div className="flex flex-col items-center w-full md:w-3/4 p-4 border mt-6 rounded shadow-md">
-    <h2 className="text-lg md:text-xl font-semibold mb-4">Parking Details</h2>
-    <div className="flex flex-col md:flex-row justify-between w-full">
-      
-      {/* Two-Wheeler Slots */}
-      <div className="flex flex-col items-center mb-6 md:mb-0 md:mr-4">
-        <h3 className="text-md font-semibold mb-2">Two-Wheeler Slots</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-          {twoWheelerSlots.map((slot) => (
-            <button
-              key={slot}
-              onClick={() => handleSlotSelection(slot, "Two-Wheeler")}
-              className={`w-24 p-2 rounded ${
-                selectedTwoWheelerSlots.includes(slot) ? 'bg-green-500' : 'bg-gray-300'
-              } hover:bg-green-400 transition duration-300 ease-in-out`}
-            >
-              {slot}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Four-Wheeler Slots */}
-      <div className="flex flex-col items-center mb-6 md:mb-0 md:mr-4">
-        <h3 className="text-md font-semibold mb-2">Four-Wheeler Slots</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-          {fourWheelerSlots.map((slot) => (
-            <button
-              key={slot}
-              onClick={() => handleSlotSelection(slot, "Four-Wheeler")}
-              className={`w-24 p-2 rounded ${
-                selectedFourWheelerSlots.includes(slot) ? 'bg-green-500' : 'bg-gray-300'
-              } hover:bg-green-400 transition duration-300 ease-in-out`}
-            >
-              {slot}
-            </button>
-          ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Two-Wheeler Slots</h3>
+              <div className="grid grid-cols-5 gap-2">
+                {twoWheelerSlots.map((slot, index) => (
+                  <div
+                    key={slot}
+                    className={`slot p-2 text-center cursor-pointer border rounded ${
+                      selectedTwoWheelerSlots.includes(slot) ? 'bg-green-500 text-white' : 'bg-gray-300'
+                    }`}
+                    onClick={() => handleSlotSelection(slot, 'Two-Wheeler')}
+                  >
+                    {slot}
+                  </div>
+                ))}
               </div>
+              {selectedTwoWheelerSlots.map((slot, index) => (
+                <div key={slot} className="mt-2">
+                  <label className="block font-semibold text-gray-700">
+                    Vehicle Number for {slot}
+                    <input
+                      type="text"
+                      value={vehicleNumbers.twoWheeler[index] || ''}
+                      onChange={(e) => handleVehicleNumberChange(e, 'twoWheeler', index)}
+                      className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300"
+                      placeholder="Enter vehicle number"
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Four-Wheeler Slots</h3>
+              <div className="grid grid-cols-5 gap-2">
+                {fourWheelerSlots.map((slot, index) => (
+                  <div
+                    key={slot}
+                    className={`slot p-2 text-center cursor-pointer border rounded ${
+                      selectedFourWheelerSlots.includes(slot) ? 'bg-green-500 text-white' : 'bg-gray-300'
+                    }`}
+                    onClick={() => handleSlotSelection(slot, 'Four-Wheeler')}
+                  >
+                    {slot}
+                  </div>
+                ))}
+              </div>
+              {selectedFourWheelerSlots.map((slot, index) => (
+                <div key={slot} className="mt-2">
+                  <label className="block font-semibold text-gray-700">
+                    Vehicle Number for {slot}
+                    <input
+                      type="text"
+                      value={vehicleNumbers.fourWheeler[index] || ''}
+                      onChange={(e) => handleVehicleNumberChange(e, 'fourWheeler', index)}
+                      className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300"
+                      placeholder="Enter vehicle number"
+                    />
+                  </label>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="flex flex-col items-center mt-6 w-full">
-            <label htmlFor="phone" className="font-semibold mb-2">Phone Number:</label>
-            <input
-              type="text"
-              id="phone"
-              value={phone}
-              onChange={handlePhoneNumberChange}
-              className="p-2 border rounded-md w-full md:w-1/2 mb-4"
-              placeholder="Enter 10-digit phone number"
-            />
-            {selectedTwoWheelerSlots.map((slot, index) => (
-              <div key={slot} className="w-full md:w-1/2 flex flex-col mb-4">
-                <label htmlFor={`twoWheeler-${index}`} className="font-semibold mb-1">
-                  {`Vehicle Number for ${slot}:`}
-                </label>
-                <input
-                  type="text"
-                  id={`twoWheeler-${index}`}
-                  value={vehicleNumbers.twoWheeler[index] || ""}
-                  onChange={(e) => handleVehicleNumberChange(e, "twoWheeler", index)}
-                  className="p-2 border rounded-md"
-                  placeholder="Enter Vehicle Number"
-                />
-              </div>
-            ))}
-            {selectedFourWheelerSlots.map((slot, index) => (
-              <div key={slot} className="w-full md:w-1/2 flex flex-col mb-4">
-                <label htmlFor={`fourWheeler-${index}`} className="font-semibold mb-1">
-                  {`Vehicle Number for ${slot}:`}
-                </label>
-                <input
-                  type="text"
-                  id={`fourWheeler-${index}`}
-                  value={vehicleNumbers.fourWheeler[index] || ""}
-                  onChange={(e) => handleVehicleNumberChange(e, "fourWheeler", index)}
-                  className="p-2 border rounded-md"
-                  placeholder="Enter Vehicle Number"
-                />
-              </div>
-            ))}
+
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleConfirmParking}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold"
+            >
+              Confirm Parking
+            </button>
           </div>
-          <button
-            onClick={handleConfirmParking}
-            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mt-4"
-          >
-            Confirm Parking
-          </button>
         </div>
       )}
-      <button
-        onClick={handleConfirm}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mt-6"
-      >
-        Proceed to Booking
-      </button>
 
-
-
-
-<div className="mt-6 p-4 border rounded shadow-md w-full md:w-1/2">
-  <h3 className="text-xl font-semibold animate-fadeIn">Cost Breakdown</h3>
-  <p className="animate-fadeIn">
-    Total Seats Cost: <FontAwesomeIcon icon={faDollarSign} /> 
-    {selectedSeats.reduce((acc, seatIndex) => {
-      const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(seatIndex));
-      return acc + (seatPrice[category] || 0);
-    }, 0)}
-  </p>
-  <p className="animate-fadeIn">
-    Total Parking Cost: <FontAwesomeIcon icon={faDollarSign} /> {parkingCost}
-  </p>
-  <p className="animate-fadeIn">
-    Total Cost: <FontAwesomeIcon icon={faDollarSign} /> {totalCost}
-  </p>
-</div>
-
+      {/* Confirm Booking Button */}
+      <div className="mt-8">
+        <button
+          onClick={handleConfirm}
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:shadow-lg"
+        >
+          Confirm Booking
+        </button>
+      </div>
     </div>
   );
 };

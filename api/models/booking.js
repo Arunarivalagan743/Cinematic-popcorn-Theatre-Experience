@@ -12,6 +12,10 @@ const bookingSchema = new mongoose.Schema({
       twoWheeler: [String],
       fourWheeler: [String],
     },
+    selectedSlot: {
+      twoWheeler: [String],
+      fourWheeler: [String],
+    },
     parkingCost: { type: Number, required: false },
   },
   currentUser: { type: String, required: false },  // Store the email associated with the user
