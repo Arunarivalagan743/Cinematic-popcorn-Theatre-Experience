@@ -9,10 +9,17 @@ const confirmPaymentSchema = new mongoose.Schema({
   totalCost: { type: Number, required: true },
   currentUser: { type: String, required: false },
   parkingDetails: {
-    parkingType: { type: String, required: true },
-    selectedSlot: { type: Map, of: String, required: true }, // Store as a Map (Object)
-    phone: { type: Number, required: true },
-    vehicleNumber: { type: String, required: true }
+    parkingType: { type: String, required: false},
+    // Store as a Map (Object)
+    phone: { type: Number, required: false },
+    vehicleNumbers: {
+      twoWheeler: [String],
+      fourWheeler: [String],
+    },
+    selectedSlot: {
+      twoWheeler: [String],
+      fourWheeler: [String],
+    },
   },
   paymentStatus: { type: String, required: true }  // 'confirmed' or 'pending'
 });

@@ -7,7 +7,7 @@ import offerImage from '../images/join.webp';import CiniImage from '../images/ci
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br text-white p-4">
       <h1 className="text-4xl font-bold mb-8 text-center text-yellow-500 tracking-wide flex items-center justify-center animate-fadeInDown">
         <FontAwesomeIcon icon={faFilm} className="mr-2 text-yellow-300 animate-bounce" />
         About Us

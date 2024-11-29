@@ -157,6 +157,7 @@ const Tickets = () => {
             twoWheeler: selectedTwoWheelerSlots.join(", "),
             fourWheeler: selectedFourWheelerSlots.join(", "),
           }
+          
         }
       : null;
 
@@ -221,6 +222,7 @@ const Tickets = () => {
       Swal.fire('Error', 'Please enter a valid 10-digit phone number.', 'error');
     }
   };
+  
 
   const handleVehicleNumberChange = (e, type, index) => {
     const newVehicleNumbers = { ...vehicleNumbers };
@@ -248,146 +250,156 @@ const Tickets = () => {
   };
 
   return (
-    <div className="flex flex-col items-center p-4">
-      <div className="flex flex-col items-center p-4">
-      {currentUser && (
-        <div className="text-center text-lg mb-6 text-green-400">
-          <p>Welcome, {currentUser.email}</p>
+<div className="flex flex-col items-center p-4">
+  {currentUser && (
+    <div className="text-center text-lg mb-6 text-green-400">
+      <p>Welcome, {currentUser.email}</p>
+    </div>
+  )}
+  <h1 className="text-3xl font-bold text-center text-yellow-500 mb-6">
+    {movie} - Screen {screen} - {timing}
+  </h1>
+  <h1 className="text-2xl md:text-4xl font-semibold mb-4">Select Your Seats</h1>
+  <div className="grid grid-cols-8 gap-2 sm:gap-3 md:gap-4 lg:gap-6 p-4 border rounded shadow-md">
+    {Array.from({ length: totalSeats }).map((_, index) => {
+      const row = rowLabels[Math.floor(index / 8)];
+      const seatNumber = (index % 8) + 1;
+      const isSelected = selectedSeats.includes(index);
+      const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(index));
+
+      return (
+        <div
+          key={index}
+          className={`seat w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex justify-center items-center rounded text-white cursor-pointer transition-all duration-300 ease-in-out transform ${
+            isSelected
+              ? 'bg-green-500 scale-105 shadow-lg'
+              : 'bg-gray-600 hover:bg-gray-500 hover:scale-110'
+          } ${
+            category === 'Gold'
+              ? 'border-2 border-yellow-400'
+              : category === 'Platinum'
+              ? 'border-2 border-blue-400'
+              : category === 'Silver'
+              ? 'border-2 border-gray-400'
+              : category === 'Diamond'
+              ? 'border-2 border-indigo-400'
+              : 'border-2 border-red-400'
+          }`}
+          onClick={() => handleSeatSelection(index)}
+          title={`Row: ${row}, Seat: ${seatNumber}`}
+        >
+          {`${row}${seatNumber}`}
         </div>
-      )}
-      <h1 className="text-3xl font-bold text-center text-yellow-500 mb-6">
-        {movie} - Screen {screen} - {timing}
-      </h1>
-        <h1 className="text-2xl md:text-4xl font-semibold mb-4">Select Your Seats</h1>
-        <div className="grid grid-cols-8 gap-2 sm:gap-3 md:gap-4 lg:gap-6 p-4 border rounded shadow-md">
-          {Array.from({ length: totalSeats }).map((_, index) => {
-            const row = rowLabels[Math.floor(index / 8)];
-            const seatNumber = (index % 8) + 1;
-            const isSelected = selectedSeats.includes(index);
-            const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(index));
-            return (
-              <div
-                key={index}
-                className={`seat w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex justify-center items-center rounded text-white cursor-pointer ${
-                  isSelected ? 'bg-green-500' : 'bg-gray-600'
-                } ${
-                  category === 'Gold' ? 'border-yellow-400' :
-                  category === 'Platinum' ? 'border-blue-400' :
-                  category === 'Silver' ? 'border-gray-400' :
-                  category === 'Diamond' ? 'border-indigo-400' :
-                  'border-red-400'
-                }`}
-                onClick={() => handleSeatSelection(index)}
-                title={`Row: ${row}, Seat: ${seatNumber}`}
-              >
-                                {`${row}${seatNumber}`}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      );
+    })}
+  </div>
+
+
 
       {/* Parking Assistance Section */}
       {showParkingPrompt && (
-        <div className="parking-section w-full md:w-3/4 lg:w-1/2 mt-8 p-6 border rounded shadow-md bg-gray-100">
-          <h2 className="text-xl font-bold mb-4 text-center">Parking Assistance</h2>
-          <div className="mb-4">
-            <label className="block font-semibold mb-2 text-gray-700">
-              Phone Number
+  <div className="parking-section w-full md:w-3/4 lg:w-1/2 mt-8 p-6 border rounded shadow-md bg-gray-100 transform transition-transform duration-500 ease-in-out hover:scale-105">
+    <h2 className="text-xl font-bold mb-4 text-center text-yellow-600">
+      Parking Assistance
+    </h2>
+    <div className="mb-4">
+      <label className="block font-semibold mb-2 text-gray-700">
+        Phone Number
+        <input
+          type="tel"
+          value={phone}
+          onChange={handlePhoneNumberChange}
+          className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300 transition-all duration-300 ease-in-out transform hover:scale-105"
+          placeholder="Enter 10-digit phone number"
+        />
+      </label>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Two-Wheeler Slots</h3>
+        <div className="grid grid-cols-5 gap-2">
+          {twoWheelerSlots.map((slot, index) => (
+            <div
+              key={slot}
+              className={`slot p-2 text-center cursor-pointer border rounded transition-all duration-300 ease-in-out transform hover:scale-110 ${
+                selectedTwoWheelerSlots.includes(slot) ? 'bg-green-500 text-white' : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+              onClick={() => handleSlotSelection(slot, 'Two-Wheeler')}
+            >
+              {slot}
+            </div>
+          ))}
+        </div>
+        {selectedTwoWheelerSlots.map((slot, index) => (
+          <div key={slot} className="mt-2">
+            <label className="block font-semibold text-gray-700">
+              Vehicle Number for {slot}
               <input
-                type="tel"
-                value={phone}
-                onChange={handlePhoneNumberChange}
-                className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300"
-                placeholder="Enter 10-digit phone number"
+                type="text"
+                value={vehicleNumbers.twoWheeler[index] || ''}
+                onChange={(e) => handleVehicleNumberChange(e, 'twoWheeler', index)}
+                className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300 transition-all duration-300 ease-in-out transform hover:scale-105"
+                placeholder="Enter vehicle number"
               />
             </label>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Two-Wheeler Slots</h3>
-              <div className="grid grid-cols-5 gap-2">
-                {twoWheelerSlots.map((slot, index) => (
-                  <div
-                    key={slot}
-                    className={`slot p-2 text-center cursor-pointer border rounded ${
-                      selectedTwoWheelerSlots.includes(slot) ? 'bg-green-500 text-white' : 'bg-gray-300'
-                    }`}
-                    onClick={() => handleSlotSelection(slot, 'Two-Wheeler')}
-                  >
-                    {slot}
-                  </div>
-                ))}
-              </div>
-              {selectedTwoWheelerSlots.map((slot, index) => (
-                <div key={slot} className="mt-2">
-                  <label className="block font-semibold text-gray-700">
-                    Vehicle Number for {slot}
-                    <input
-                      type="text"
-                      value={vehicleNumbers.twoWheeler[index] || ''}
-                      onChange={(e) => handleVehicleNumberChange(e, 'twoWheeler', index)}
-                      className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300"
-                      placeholder="Enter vehicle number"
-                    />
-                  </label>
-                </div>
-              ))}
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Four-Wheeler Slots</h3>
-              <div className="grid grid-cols-5 gap-2">
-                {fourWheelerSlots.map((slot, index) => (
-                  <div
-                    key={slot}
-                    className={`slot p-2 text-center cursor-pointer border rounded ${
-                      selectedFourWheelerSlots.includes(slot) ? 'bg-green-500 text-white' : 'bg-gray-300'
-                    }`}
-                    onClick={() => handleSlotSelection(slot, 'Four-Wheeler')}
-                  >
-                    {slot}
-                  </div>
-                ))}
-              </div>
-              {selectedFourWheelerSlots.map((slot, index) => (
-                <div key={slot} className="mt-2">
-                  <label className="block font-semibold text-gray-700">
-                    Vehicle Number for {slot}
-                    <input
-                      type="text"
-                      value={vehicleNumbers.fourWheeler[index] || ''}
-                      onChange={(e) => handleVehicleNumberChange(e, 'fourWheeler', index)}
-                      className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300"
-                      placeholder="Enter vehicle number"
-                    />
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={handleConfirmParking}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold"
-            >
-              Confirm Parking
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Confirm Booking Button */}
-      <div className="mt-8">
-        <button
-          onClick={handleConfirm}
-          className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:shadow-lg"
-        >
-          Confirm Booking
-        </button>
+        ))}
       </div>
+
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Four-Wheeler Slots</h3>
+        <div className="grid grid-cols-5 gap-2">
+          {fourWheelerSlots.map((slot, index) => (
+            <div
+              key={slot}
+              className={`slot p-2 text-center cursor-pointer border rounded transition-all duration-300 ease-in-out transform hover:scale-110 ${
+                selectedFourWheelerSlots.includes(slot) ? 'bg-green-500 text-white' : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+              onClick={() => handleSlotSelection(slot, 'Four-Wheeler')}
+            >
+              {slot}
+            </div>
+          ))}
+        </div>
+        {selectedFourWheelerSlots.map((slot, index) => (
+          <div key={slot} className="mt-2">
+            <label className="block font-semibold text-gray-700">
+              Vehicle Number for {slot}
+              <input
+                type="text"
+                value={vehicleNumbers.fourWheeler[index] || ''}
+                onChange={(e) => handleVehicleNumberChange(e, 'fourWheeler', index)}
+                className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300 transition-all duration-300 ease-in-out transform hover:scale-105"
+                placeholder="Enter vehicle number"
+              />
+            </label>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div className="mt-6 flex justify-end">
+      <button
+        onClick={handleConfirmParking}
+        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold transition-all duration-300 ease-in-out transform hover:scale-110"
+      >
+        Confirm Parking
+      </button>
+    </div>
+  </div>
+)}
+
+{/* Confirm Booking Button */}
+<div className="mt-8">
+  <button
+    onClick={handleConfirm}
+    className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110"
+  >
+    Confirm Booking
+  </button>
+</div>
+
     </div>
   );
 };

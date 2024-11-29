@@ -438,7 +438,7 @@ const Home = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4 ${fontFamily}`}>
+    <div className={`min-h-screen bg-gradient-to-whitefrom-gray-900 to-white text-white p-4 ${fontFamily}`}>
       <h1 className="text-3xl lg:text-4xl font-bold mb-8 text-center text-yellow-500 tracking-wide flex items-center justify-center">
         <FontAwesomeIcon icon={faTheaterMasks} className="mr-2 text-yellow-300" />
         Now Showing
