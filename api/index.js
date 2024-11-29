@@ -10,7 +10,9 @@ import movieRoutes from './routes/movie.route.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import confirmPaymentRoutes from './routes/confirmPaymentRoutes.js';   // Include `.js` extension
  // Import booking routes
-
+ import  contactRoutes from './routes/contact.js';
+ import  faqRoutes  from './routes/faq.js';
+ 
 
 dotenv.config();
 
@@ -44,6 +46,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', confirmPaymentRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/faq', faqRoutes);
 // app.use('/api/booking', bookingRoutes); // Use booking route
 
 // Global error handler
