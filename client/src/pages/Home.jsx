@@ -201,6 +201,8 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import withReactContent from 'sweetalert2-react-content';
 
+import { FaFilm, FaUser, FaNewspaper, FaTag } from 'react-icons/fa'; // You can import any React icon
+
 const MySwal = withReactContent(Swal);
 
 const Home = () => {
@@ -236,20 +238,55 @@ const Home = () => {
 
   const showMovieDetails = (movie) => {
     MySwal.fire({
-      title: <strong>{movie.name}</strong>,
-      html: (
-        <div>
-          <p><strong>Genre:</strong> {movie.genre}</p>
-          <p><strong>Cast:</strong> {movie.cast}</p>
-          <p><strong>Summary:</strong> {movie.summary}</p>
+      title: (
+        <div className="flex items-center">
+          <FaFilm className="mr-2 text-yellow-500 animate-pulse" size={24} />
+          <strong>{movie.name}</strong>
         </div>
       ),
-      background: 'linear-gradient(to right, #f3e7e9, #e3eeff)',
-      color: '#333',
+      html: (
+        <div className="space-y-4">
+          <div className="flex items-center animate-bounce">
+            <FaTag className="mr-2 text-indigo-400" size={20} />
+            <p><strong>Genre:</strong> <span className="text-indigo-500">{movie.genre}</span></p>
+          </div>
+          <div className="flex items-center animate-bounce">
+            <FaUser className="mr-2 text-green-400" size={20} />
+            <p><strong>Cast:</strong> <span className="text-green-500">{movie.cast}</span></p>
+          </div>
+          <div className="flex items-center animate-bounce">
+            <FaNewspaper className="mr-2 text-pink-400" size={20} />
+            <p><strong>Summary:</strong> <span className="text-pink-500">{movie.summary}</span></p>
+          </div>
+        </div>
+      ),
+      background: 'linear-gradient(145deg, #8e2de2, #4a00e0)' ,// A vibrant purple-to-blue gradient
+      // Red-orange explosion effect
+      color: '#fff',
       icon: 'info',
       confirmButtonText: 'Close',
+      showCloseButton: true,
+      closeButtonAriaLabel: 'Close modal',
       customClass: {
-        popup: 'animated fadeIn',
+        popup: 'animated zoomIn', // Zoom-in effect on modal popup
+        title: 'text-2xl font-bold text-white',
+        htmlContainer: 'p-4 text-lg leading-relaxed',
+        icon: 'text-white text-3xl animate-pulse', // Pulsing icon
+        confirmButton: 'bg-gradient-to-r from-red-600 to-yellow-500 text-white hover:scale-125 transition-transform ease-out', // Blazing button with hover effect
+      },
+      didOpen: () => {
+        const popup = document.querySelector('.swal2-popup');
+        popup.style.transition = 'transform 0.5s ease-in-out';
+        popup.style.transform = 'scale(1.2)'; // Explosion expansion
+      },
+      willClose: () => {
+        const popup = document.querySelector('.swal2-popup');
+        popup.style.transition = 'transform 0.3s ease-in-out';
+        popup.style.transform = 'scale(1)';
+      },
+      didRender: () => {
+        const popup = document.querySelector('.swal2-popup');
+        popup.classList.add('animate__animated', 'animate__rubberBand'); // Shaking effect
       },
     });
   };
@@ -339,24 +376,25 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="p-4 text-gray-600 text-sm md:text-base space-y-4 font-[Poppins]">
-              <p className="text-xl md:text-2xl font-bold text-pink-600 flex items-center gap-3">
-                <FontAwesomeIcon icon={faFilm} className="text-pink-500" />
-                {movie.name}
-              </p>
-              <p className="text-base md:text-lg text-purple-400 flex items-center gap-3">
-                <FontAwesomeIcon icon={faTv} className="text-purple-500" />
-                Screen: <span className="font-medium">{movie.screen}</span>
-              </p>
-              <p className="text-base md:text-lg text-green-400 flex items-center gap-3">
-                <FontAwesomeIcon icon={faLanguage} className="text-green-500" />
-                Language: <span className="font-medium">{movie.language}</span>
-              </p>
-              <p className="text-base md:text-lg text-blue-400 flex items-center gap-3">
-                <FontAwesomeIcon icon={faClock} className="text-blue-500" />
-                Timing: <span className="font-medium">{movie.timing}</span>
-              </p>
-            </div>
+            <div className="p-4 text-gray-600 text-sm md:text-base space-y-4 font-[Lora]">
+  <p className="text-xl md:text-2xl font-extrabold text-pink-600 flex items-center gap-3">
+    <FontAwesomeIcon icon={faFilm} className="text-pink-500" />
+    {movie.name}
+  </p>
+  <p className="text-base md:text-lg font-medium text-purple-400 flex items-center gap-3">
+    <FontAwesomeIcon icon={faTv} className="text-purple-500" />
+    Screen: <span className="font-semibold">{movie.screen}</span>
+  </p>
+  <p className="text-base md:text-lg font-medium text-green-400 flex items-center gap-3">
+    <FontAwesomeIcon icon={faLanguage} className="text-green-500" />
+    Language: <span className="font-semibold">{movie.language}</span>
+  </p>
+  <p className="text-base md:text-lg font-medium text-blue-400 flex items-center gap-3">
+    <FontAwesomeIcon icon={faClock} className="text-blue-500" />
+    Timing: <span className="font-semibold">{movie.timing}</span>
+  </p>
+</div>
+
 
             <div className="p-4 text-center mt-auto">
               <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>

@@ -30,11 +30,11 @@ export default function App() {
           <Route element={<PrivateRoute />}>
             <Route path='/profile' element={<Profile />} />
           </Route>
-          <Route path='/parkLot' element={<ParkLot />} /> {/* Parking Lot page */}
-          <Route path='/payment' element={<Payment />} /> {/* Payment page */}
+          <Route path='/parkLot' element={<ParkLot />} /> 
+          <Route path='/payment' element={<Payment />} />
         </Routes>
       </main>
-      {/* <Footer /> Uncomment when you add a footer component */}
+ 
     </BrowserRouter>
   );
 }

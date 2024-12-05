@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDollarSign, faCar, faMotorcycle } from '@fortawesome/free-solid-svg-icons';
 
+
 const Tickets = () => {
   const { movie, screen, timing } = useParams();
   const navigate = useNavigate();
@@ -102,34 +103,61 @@ const Tickets = () => {
     });
 
     const movieConfirmation = await Swal.fire({
-      title: 'Confirm Movie Booking',
+      title: '<span class="text-3xl font-bold text-yellow-400">🎥 Confirm Movie Booking</span>',
       html: `
-        <p>Movie: ${movie}</p>
-        <p>Screen: ${screen}</p>
-        <p>Timing: ${timing}</p>
-        <p>Seats: ${actualSeats.join(', ')}</p>
-        <p>Total Seat Cost: $${selectedSeats.reduce((acc, seatIndex) => {
-          const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(seatIndex));
-          return acc + (seatPrice[category] || 0);
-        }, 0)}</p>
+        <div class="text-gray-200 text-lg">
+          <p><span class="font-semibold">Movie:</span> ${movie}</p>
+          <p><span class="font-semibold">Screen:</span> ${screen}</p>
+          <p><span class="font-semibold">Timing:</span> ${timing}</p>
+          <p><span class="font-semibold">Seats:</span> ${actualSeats.join(', ')}</p>
+          <p class="mt-2"><span class="font-semibold">Total Seat Cost:</span> $${selectedSeats.reduce((acc, seatIndex) => {
+            const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(seatIndex));
+            return acc + (seatPrice[category] || 0);
+          }, 0)}</p>
+        </div>
       `,
       icon: 'info',
       showCancelButton: true,
-      confirmButtonText: 'Next',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: '<span class="px-4 py-2 rounded-full">Next</span>',
+      cancelButtonText: '<span class="px-4 py-2 rounded-full">Cancel</span>',
+      confirmButtonColor: '#10B981', // Tailwind's emerald-500
+      cancelButtonColor: '#EF4444', // Tailwind's red-500
+      customClass: {
+        popup: 'bg-gradient-to-r from-blue-700 to-purple-800 p-8 rounded-lg shadow-xl',
+        title: 'text-center font-bold text-yellow-400',
+        htmlContainer: 'text-left text-gray-200',
+        confirmButton: 'bg-emerald-500 text-white px-6 py-2 rounded-full hover:bg-emerald-600 transition-all',
+        cancelButton: 'bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-all',
+      },
+      background: 'rgba(25, 25, 25, 0.9)', // Dark background for better focus
     });
-
+    
     if (!movieConfirmation.isConfirmed) return;
-
     const parkingResult = await Swal.fire({
-      title: 'Parking Assistance Required?',
-      text: 'Do you need parking assistance?',
+      title: '<span class="text-3xl font-bold text-yellow-400">🚗 Ready for a luxury parking experience?</span>',
+      html: `
+        <p class="text-lg text-gray-100 mb-4">We’re here to help you find the best parking spot for your vehicle! 🚙</p>
+        <div class="flex justify-center space-x-4">
+       
+          <span class="text-xl text-gray-200">Let us guide you!</span>
+        </div>
+      `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Yes',
-      cancelButtonText: 'No',
+      confirmButtonText: 'Yes, Show Me Parking 🅿️',
+      cancelButtonText: 'No, Thanks 🙅‍♂️',
+      confirmButtonColor: '#10B981', // Tailwind's emerald-500
+      cancelButtonColor: '#EF4444', // Tailwind's red-500
+      customClass: {
+        popup: 'bg-gradient-to-r from-blue-700 to-purple-800 p-8 rounded-lg shadow-xl',
+        title: 'text-center font-bold text-yellow-400',
+        htmlContainer: 'text-center text-gray-200',
+        confirmButton: 'px-6 py-2 text-white font-semibold rounded-full hover:bg-emerald-600 transition-all',
+        cancelButton: 'px-6 py-2 text-white font-semibold rounded-full hover:bg-red-600 transition-all',
+      },
+      background: 'rgba(25, 25, 25, 0.9)', // Darker background for contrast
     });
-
+    
     if (parkingResult.isConfirmed) {
       setShowParkingPrompt(true);
       setParkingNeeded(true);
@@ -161,25 +189,38 @@ const Tickets = () => {
         }
       : null;
 
-    const result = await Swal.fire({
-      title: 'Confirm Booking',
-      html: `
-        <p>Movie: ${movie}</p>
-        <p>Screen: ${screen}</p>
-        <p>Timing: ${timing}</p>
-        <p>Seats: ${actualSeats.join(', ')}</p>
-        <p>Total Seat Cost: $${selectedSeats.reduce((acc, seatIndex) => {
-          const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(seatIndex));
-          return acc + (seatPrice[category] || 0);
-        }, 0)}</p>
-        ${parkingDetails ? `<p>Parking Cost: $${parkingCost}</p>` : ''}
-        <p>Total Cost: $${totalCost}</p>
-      `,
-      icon: 'info',
-      showCancelButton: true,
-      confirmButtonText: 'Proceed to Payment',
-      cancelButtonText: 'Cancel',
-    });
+      const result = await Swal.fire({
+        title: '<span class="text-3xl font-bold text-yellow-400">🎥 Confirm Your Booking</span>',
+        html: `
+          <div class="text-gray-200 text-lg">
+            <p><span class="font-semibold">Movie:</span> ${movie}</p>
+            <p><span class="font-semibold">Screen:</span> ${screen}</p>
+            <p><span class="font-semibold">Timing:</span> ${timing}</p>
+            <p><span class="font-semibold">Seats:</span> ${actualSeats.join(', ')}</p>
+            <p><span class="font-semibold">Total Seat Cost:</span> $${selectedSeats.reduce((acc, seatIndex) => {
+              const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(seatIndex));
+              return acc + (seatPrice[category] || 0);
+            }, 0)}</p>
+            ${parkingDetails ? `<p><span class="font-semibold">Parking Cost:</span> $${parkingCost}</p>` : ''}
+            <p class="mt-4 text-xl font-bold"><span class="text-yellow-400">Total Cost:</span> $${totalCost}</p>
+          </div>
+        `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: '<span class="px-4 py-2 rounded-full">Proceed to Payment</span>',
+        cancelButtonText: '<span class="px-4 py-2 rounded-full">Cancel</span>',
+        confirmButtonColor: '#10B981', // Tailwind's emerald-500
+        cancelButtonColor: '#EF4444', // Tailwind's red-500
+        customClass: {
+          popup: 'bg-gradient-to-r from-blue-700 to-purple-800 p-8 rounded-lg shadow-xl',
+          title: 'text-center font-bold text-yellow-400',
+          htmlContainer: 'text-left text-gray-200',
+          confirmButton: 'bg-emerald-500 text-white px-6 py-2 rounded-full hover:bg-emerald-600 transition-all',
+          cancelButton: 'bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-all',
+        },
+        background: 'rgba(25, 25, 25, 0.9)', // Dark background for better contrast
+      });
+      
 
     if (result.isConfirmed) {
       const bookingData = {
