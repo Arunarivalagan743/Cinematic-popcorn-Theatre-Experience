@@ -55,7 +55,7 @@ app.use(
     directives: {
       defaultSrc: ["'none'"],
       scriptSrc: ["'self'", "'unsafe-inline'"], // Replace 'unsafe-inline' with a nonce if possible
-      imgSrc: ["'self'", "https://mern-auth-movie-2.onrender.com"],
+      imgSrc: ["'self'", "https://mern-auth-movie-6.onrender.com"],
       styleSrc: ["'self'"],
     },
   })
@@ -77,5 +77,5 @@ app.use((err, req, res, next) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Server running at https://mern-auth-movie-6.onrender.com:${PORT}`);
 });
