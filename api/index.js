@@ -27,11 +27,7 @@ const jwtSecret = process.env.JWT_SECRET;
 console.log('JWT Secret:', process.env.JWT_SECRET); // Should print your secret
 
 // Middleware
-app.use(cors({
-  origin: 'https://mern-auth-movie-book.onrender.com',  // Adjust to your frontend domain
-  methods: ['GET', 'POST'],
-  credentials: true
-}));
+
 app.use(express.json());
 app.use(cookieParser());
 
