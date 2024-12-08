@@ -1,7 +1,7 @@
 
 import express from 'express';
 import mongoose from 'mongoose';
-import helmet  from 'helmet';
+
 
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -52,7 +52,10 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/faq', faqRoutes);
 
 
-
+// Your other middleware and routes
+app.get('/', (req, res) => {
+  res.send('CSP is set!');
+});
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
@@ -65,5 +68,5 @@ app.use((err, req, res, next) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running at ${PORT}`);
+  console.log(`Server running at https://mern-auth-movie-6.onrender.com:${PORT}`);
 });
