@@ -52,7 +52,7 @@ const FAQ = () => {
     e.preventDefault();
     
     try {
-      const response = await axios.post('http://localhost:5000/api/faq/ask', {
+      const response = await axios.post('/api/faq/ask', {
         userQuestion: questionData.userQuestion,
         userEmail: questionData.userEmail,
       });
@@ -75,7 +75,7 @@ const FAQ = () => {
     e.preventDefault();
   
     try {
-      const response = await axios.post('http://localhost:5000/api/contact/submit', {
+      const response = await axios.post('/api/contact/submit', {
         name: formData.name,
         email: formData.email,
         message: formData.message,
