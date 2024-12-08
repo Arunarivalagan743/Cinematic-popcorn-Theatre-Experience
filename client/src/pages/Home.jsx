@@ -33,7 +33,8 @@ const Home = () => {
   const fetchMovies = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/movies');
+  const response = await axios.get('/api/movies');
+
       setMovies(response.data);
       setError(null);
     } catch (err) {
