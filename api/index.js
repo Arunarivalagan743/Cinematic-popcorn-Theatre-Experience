@@ -50,21 +50,9 @@ app.use('/api', bookingRoutes);
 app.use('/api', confirmPaymentRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/faq', faqRoutes);
-app.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      defaultSrc: ["'none'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Replace 'unsafe-inline' with a nonce if possible
-      imgSrc: ["'self'", "https://mern-auth-movie-6.onrender.com"],
-      styleSrc: ["'self'"],
-    },
-  })
-);
 
-// Your other middleware and routes
-app.get('/', (req, res) => {
-  res.send('CSP is set!');
-});
+
+
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
@@ -77,5 +65,5 @@ app.use((err, req, res, next) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running at https://mern-auth-movie-6.onrender.com:${PORT}`);
+  console.log(`Server running at ${PORT}`);
 });
