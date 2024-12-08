@@ -33,7 +33,8 @@ const Home = () => {
   const fetchMovies = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/movies');
+  const response = await axios.get('https://mern-auth-movie-mov.onrender.com/api/movies');
+
       setMovies(response.data);
       setError(null);
     } catch (err) {
