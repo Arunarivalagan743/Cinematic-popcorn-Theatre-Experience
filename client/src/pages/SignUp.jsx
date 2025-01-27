@@ -19,7 +19,7 @@ export default function SignUp() {
     try {
       setLoading(true);
       setError(false);
-      const res = await fetch('/api/auth/signup', {
+      const res = await fetch('https://mern-auth-movie.onrender.com/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export default function SignUp() {
   return (
     <div className="p-8 max-w-md mx-auto bg-gradient-to-b from-gray-100 to-white rounded-lg shadow-xl mt-20 transform transition-all hover:shadow-2xl duration-300">
       <h1 className="text-4xl text-center font-bold text-purple-600 my-5 tracking-wide animate-fadeIn">
-        Sign Up
+        Register
       </h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="relative group">

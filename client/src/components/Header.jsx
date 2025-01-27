@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -9,6 +10,7 @@ import {
   FaQuestionCircle,
   FaBars,
   FaTimes,
+  FaSignInAlt,
 } from "react-icons/fa";
 
 export default function Header() {
@@ -66,7 +68,7 @@ export default function Header() {
 
           {/* Profile or Sign In */}
           <Link
-            to="/profile"
+            to={currentUser ? "/profile" : "/sign-in"}
             className="transition-all duration-300 hover:scale-110"
           >
             {currentUser ? (
@@ -110,6 +112,32 @@ export default function Header() {
                       {name}
                     </li>
                   ))}
+
+                  {/* Profile or Sign In */}
+                  <li
+                    onClick={() =>
+                      currentUser
+                        ? handleNavigation("/profile")
+                        : handleNavigation("/sign-in")
+                    }
+                    className="flex items-center gap-3 text-gray-800 font-medium px-3 py-2 hover:bg-gray-200 rounded-lg transition-all duration-300 cursor-pointer"
+                  >
+                    {currentUser ? (
+                      <>
+                        <img
+                          src={currentUser.profilePicture}
+                          alt="profile"
+                          className="h-10 w-10 rounded-full border-2 border-gray-400 shadow-md"
+                        />
+                        <span>Profile</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaSignInAlt className="text-xl" />
+                        <span>Sign In</span>
+                      </>
+                    )}
+                  </li>
                 </ul>
               </div>
             </div>
@@ -140,4 +168,3 @@ export default function Header() {
     </div>
   );
 }
-

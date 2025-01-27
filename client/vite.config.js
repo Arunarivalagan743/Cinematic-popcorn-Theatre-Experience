@@ -9,11 +9,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://mern-auth-movie-apii.onrender.com',  // Make sure this matches your backend URL
+        target: 'https://mern-auth-movie.onrender.com',  // Make sure this matches your backend URL
         changeOrigin: true,
         secure: false,
       },
     },
   },
 });
-// target: 'https://mern-auth-movie-api.onrender.com',
+// target: 'https://mern-auth-movie-api.onrender.com', target: 'https://mern-auth-movie-apii.onrender.com',

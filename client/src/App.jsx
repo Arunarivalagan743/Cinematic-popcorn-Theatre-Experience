@@ -9,7 +9,7 @@ import Header from './components/Header';
 import PrivateRoute from './components/PrivateRoute';
 import Tickets from './pages/Tickets';
 import Faq from './pages/Faq';
-import ParkLot from './pages/ParkLot'; // Import the ParkLot component
+ // Import the ParkLot component
 import Payment from './pages/payment'; // Import the Payment component
 
 export default function App() {
@@ -26,11 +26,11 @@ export default function App() {
           <Route path='/faq' element={<Faq />} />
           <Route path='/sign-in' element={<SignIn />} />
           <Route path='/sign-up' element={<SignUp />} />
-          <Route path="/parkLot" element={<ParkLot />} />
+       
           <Route element={<PrivateRoute />}>
             <Route path='/profile' element={<Profile />} />
           </Route>
-          <Route path='/parkLot' element={<ParkLot />} /> 
+         
           <Route path='/payment' element={<Payment />} />
         </Routes>
       </main>

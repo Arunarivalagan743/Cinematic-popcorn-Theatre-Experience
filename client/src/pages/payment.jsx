@@ -82,7 +82,7 @@ const Payment = () => {
         },
       };
 
-      const response = await axios.post('/api/confirm-payment', { bookingData: paymentData });
+      const response = await axios.post('https://mern-auth-movie.onrender.com/api/confirm-payment', { bookingData: paymentData });
 
       if (response.status === 200) {
         Swal.fire({
