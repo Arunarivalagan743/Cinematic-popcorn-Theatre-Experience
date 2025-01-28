@@ -234,7 +234,7 @@ const Tickets = () => {
       };
 
       try {
-        const response = await fetch('https://mern-auth-movie.onrender.com/api/bookings', {
+        const response = await fetch('/api/bookings', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
