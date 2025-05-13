@@ -24,6 +24,21 @@ console.log('JWT Secret:', process.env.JWT_SECRET); // Should print your secret
 app.use(express.json());
 app.use(cookieParser());
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://cinematic-popcorn.netlify.app',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 // CORS Configuration to allow requests from your Netlify frontend
 
 // Connect to MongoDB using Mongoose

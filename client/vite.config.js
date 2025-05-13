@@ -9,7 +9,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',  // Make sure this matches your backend URL
+        target: 'https://cinematic-popcorn-theatre-experience.onrender.com',  // Make sure this matches your backend URL
         changeOrigin: true,
         secure: false,
       },

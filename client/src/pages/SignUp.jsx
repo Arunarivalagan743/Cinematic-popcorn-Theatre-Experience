@@ -19,13 +19,15 @@ export default function SignUp() {
     try {
       setLoading(true);
       setError(false);
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+    const res = await fetch('/api/auth/signup', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include', // ✅ Add this line
+  body: JSON.stringify(formData),
+});
+
       const data = await res.json();
       setLoading(false);
       if (data.success === false) {

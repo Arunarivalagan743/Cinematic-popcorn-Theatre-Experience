@@ -55,6 +55,8 @@ const FAQ = () => {
       const response = await axios.post('/api/faq/ask', {
         userQuestion: questionData.userQuestion,
         userEmail: questionData.userEmail,
+      },{
+        withCredentials: true, // Include credentials in the request
       });
   
       Swal.fire({
