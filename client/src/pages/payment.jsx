@@ -82,7 +82,11 @@ const Payment = () => {
         },
       };
 
-      const response = await axios.post('/api/confirm-payment', { bookingData: paymentData });
+      const response = await axios.post('/api/confirm-payment', { bookingData: paymentData }
+        , {
+  withCredentials: true, // ✅ Add this
+}
+      );
 
       if (response.status === 200) {
         Swal.fire({

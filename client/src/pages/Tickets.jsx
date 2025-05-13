@@ -234,13 +234,15 @@ const Tickets = () => {
       };
 
       try {
-        const response = await fetch('/api/bookings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(bookingData),
-        });
+     const response = await fetch('/api/bookings', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  credentials: 'include', // ✅ This line ensures cookies/auth is sent
+  body: JSON.stringify(bookingData),
+});
+
 
         if (response.ok) {
           localStorage.setItem("bookingData", JSON.stringify(bookingData));
