@@ -26,7 +26,7 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://ciniparkmafia.netlify.app',
+  'https://ciniparkmak.netlify.app/',
 ];
 
 app.use(cors({
