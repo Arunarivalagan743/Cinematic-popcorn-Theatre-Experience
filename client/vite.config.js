@@ -16,4 +16,3 @@ export default defineConfig({
     },
   },
 });
-// target: 'https://mern-auth-movie-api.onrender.com', target: 'https://mern-auth-movie-apii.onrender.com',
