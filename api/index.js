@@ -26,7 +26,7 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://ciniparkmak.netlify.app/',
+  'https://cinematic-popcorn-theatre-experience.vercel.app'
 ];
 
 app.use(cors({
