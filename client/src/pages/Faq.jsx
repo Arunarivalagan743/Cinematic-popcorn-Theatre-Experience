@@ -52,7 +52,7 @@ const FAQ = () => {
     e.preventDefault();
     
     try {
-      const response = await axios.post('/api/faq/ask', {
+      const response = await axios.post('https://cinematic-popcorn-theatre-experience-1.onrender.com/api/faq/ask', {
         userQuestion: questionData.userQuestion,
         userEmail: questionData.userEmail,
       },{
