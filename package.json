@@ -2,6 +2,10 @@
   "name": "mern-auth",
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "build": "cd client && npm install && npm run build",
+    "start": "node api/index.js"
+  },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.1",
     "@fortawesome/free-solid-svg-icons": "^6.7.0",
@@ -143,7 +147,8 @@
   "scripts": {
     "dev": "nodemon api/index.js",
     "start": "node api/index.js",
-    "host": "vite --host"
+    "host": "vite --host",
+    "build": "cd client && npm install && npm run build"
   },
   "keywords": [],
   "author": "",
