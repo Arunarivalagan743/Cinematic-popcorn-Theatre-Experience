@@ -242,7 +242,7 @@ const Tickets = () => {
       };
 
       try {
-     const response = await fetch('https://cinematic-popcorn-theatre-experience-1.onrender.com/api/bookings', {
+     const response = await fetch('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/bookings', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

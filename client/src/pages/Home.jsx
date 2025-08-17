@@ -33,7 +33,7 @@ const Home = () => {
   const fetchMovies = async () => {
     setLoading(true);
     try {
-const response = await axios.get('https://cinematic-popcorn-theatre-experience-1.onrender.com/api/movies', {
+const response = await axios.get('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/movies', {
   withCredentials: true, // ✅ Add this
 });
 

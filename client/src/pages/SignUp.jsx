@@ -19,7 +19,7 @@ export default function SignUp() {
     try {
       setLoading(true);
       setError(false);
-    const res = await fetch('https://cinematic-popcorn-theatre-experience-1.onrender.com/api/auth/signup', {
+    const res = await fetch('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/auth/signup', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

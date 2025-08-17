@@ -108,7 +108,7 @@ const Payment = () => {
         },
       };
 
-      const response = await axios.post('https://cinematic-popcorn-theatre-experience-1.onrender.com/api/confirm-payment', { bookingData: paymentData }
+      const response = await axios.post('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/confirm-payment', { bookingData: paymentData }
         , {
   withCredentials: true, // ✅ Add this
 }
