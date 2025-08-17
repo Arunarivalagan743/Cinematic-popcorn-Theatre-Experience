@@ -26,7 +26,7 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   'http://localhost:5173',
-  ''
+  'https://cinemax-beta-ten.vercel.app/'
 ];
 
 app.use(cors({
