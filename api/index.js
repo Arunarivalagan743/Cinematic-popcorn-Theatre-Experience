@@ -26,7 +26,10 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://cinemax-beta-ten.vercel.app/'
+  'https://cinemax-beta-ten.vercel.app',
+  'https://cinematic-popcorn-theatre-experience.vercel.app',
+  'https://cinematic-popcorn-park.vercel.app',
+  'https://cinematic-popcorn-theatre-experience-2.vercel.app'
 ];
 
 app.use(cors({
@@ -34,7 +37,8 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.log('Blocked origin:', origin);
+      callback(null, true); // Temporarily allow all origins while debugging
     }
   },
   credentials: true,
