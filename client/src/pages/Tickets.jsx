@@ -103,14 +103,14 @@ const Tickets = () => {
     });
 
     const movieConfirmation = await Swal.fire({
-      title: '<span class="text-3xl font-bold text-yellow-400">🎥 Confirm Movie Booking</span>',
+      title: `<span class="text-3xl font-cinzel font-bold text-[#C8A951]" style="text-shadow: 0 0 10px rgba(200, 169, 81, 0.3);">Confirm Movie Booking</span>`,
       html: `
-        <div class="text-gray-200 text-lg">
-          <p><span class="font-semibold">Movie:</span> ${movie}</p>
-          <p><span class="font-semibold">Screen:</span> ${screen}</p>
-          <p><span class="font-semibold">Timing:</span> ${timing}</p>
-          <p><span class="font-semibold">Seats:</span> ${actualSeats.join(', ')}</p>
-          <p class="mt-2"><span class="font-semibold">Total Seat Cost:</span> $${selectedSeats.reduce((acc, seatIndex) => {
+        <div class="text-[#F5F5F5] text-lg font-poppins">
+          <p class="mb-2"><span class="text-[#C8A951] font-medium">Movie:</span> ${movie}</p>
+          <p class="mb-2"><span class="text-[#C8A951] font-medium">Screen:</span> ${screen}</p>
+          <p class="mb-2"><span class="text-[#C8A951] font-medium">Timing:</span> ${timing}</p>
+          <p class="mb-2"><span class="text-[#C8A951] font-medium">Seats:</span> ${actualSeats.join(', ')}</p>
+          <p class="mt-4 pt-3 border-t border-[#C8A951]/30"><span class="text-[#C8A951] font-semibold">Total Seat Cost:</span> $${selectedSeats.reduce((acc, seatIndex) => {
             const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(seatIndex));
             return acc + (seatPrice[category] || 0);
           }, 0)}</p>
@@ -118,23 +118,24 @@ const Tickets = () => {
       `,
       icon: 'info',
       showCancelButton: true,
-      confirmButtonText: '<span class="px-4 py-2 rounded-full">Next</span>',
-      cancelButtonText: '<span class="px-4 py-2 rounded-full">Cancel</span>',
-      confirmButtonColor: '#10B981', // Tailwind's emerald-500
-      cancelButtonColor: '#EF4444', // Tailwind's red-500
+      confirmButtonText: '<span class="px-6">Next</span>',
+      cancelButtonText: '<span class="px-6">Cancel</span>',
+      confirmButtonColor: '#0D0D0D',
+      cancelButtonColor: '#0D0D0D',
       customClass: {
-        popup: 'bg-gradient-to-r from-blue-700 to-purple-800 p-8 rounded-lg shadow-xl',
-        title: 'text-center font-bold text-yellow-400',
-        htmlContainer: 'text-left text-gray-200',
-        confirmButton: 'bg-emerald-500 text-white px-6 py-2 rounded-full hover:bg-emerald-600 transition-all',
-        cancelButton: 'bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-all',
+        popup: 'bg-[#0D0D0D] border border-[#C8A951]/30 p-8 shadow-2xl',
+        title: 'text-center mb-4',
+        htmlContainer: 'text-left',
+        confirmButton: 'border border-[#C8A951] text-[#F5F5F5] hover:bg-[#C8A951]/10 transition-all font-cinzel',
+        cancelButton: 'border border-[#E50914] text-[#F5F5F5] hover:bg-[#E50914]/10 transition-all font-cinzel',
+        icon: 'text-[#C8A951]'
       },
-      background: 'rgba(25, 25, 25, 0.9)', // Dark background for better focus
+      background: '#0D0D0D',
     });
     
     if (!movieConfirmation.isConfirmed) return;
     const parkingResult = await Swal.fire({
-      title: '<span class="text-3xl font-bold text-yellow-400">🚗 Ready for a luxury parking experience?</span>',
+      title: '<span class="font-cinzel text-3xl font-bold text-[#C8A951] tracking-wide" style="text-shadow: 0 0 10px rgba(200, 169, 81, 0.3);">Valet Parking Service</span>',
       html: `
         <p class="text-lg text-gray-100 mb-4">We’re here to help you find the best parking spot for your vehicle! 🚙</p>
         <div class="flex justify-center space-x-4">
@@ -142,20 +143,26 @@ const Tickets = () => {
           <span class="text-xl text-gray-200">Let us guide you!</span>
         </div>
       `,
-      icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Yes, Show Me Parking 🅿️',
-      cancelButtonText: 'No, Thanks 🙅‍♂️',
-      confirmButtonColor: '#10B981', // Tailwind's emerald-500
-      cancelButtonColor: '#EF4444', // Tailwind's red-500
+      confirmButtonText: 'Reserve Parking',
+      cancelButtonText: 'No, Thank You',
+      confirmButtonColor: '#0D0D0D',
+      cancelButtonColor: '#1A1A1A',
       customClass: {
-        popup: 'bg-gradient-to-r from-blue-700 to-purple-800 p-8 rounded-lg shadow-xl',
-        title: 'text-center font-bold text-yellow-400',
-        htmlContainer: 'text-center text-gray-200',
-        confirmButton: 'px-6 py-2 text-white font-semibold rounded-full hover:bg-emerald-600 transition-all',
-        cancelButton: 'px-6 py-2 text-white font-semibold rounded-full hover:bg-red-600 transition-all',
+        popup: 'bg-[#0D0D0D] border border-[#C8A951]/30 rounded-none p-8',
+        title: 'text-center font-cinzel mb-6',
+        htmlContainer: 'text-center',
+        confirmButton: 'px-8 py-3 text-[#C8A951] font-cinzel border border-[#C8A951] hover:bg-[#C8A951]/10 tracking-wider transition-all duration-300',
+        cancelButton: 'px-8 py-3 text-[#F5F5F5] font-cinzel border border-[#E50914]/50 hover:bg-[#E50914]/10 tracking-wider transition-all duration-300',
+        actions: 'mt-8'
       },
-      background: 'rgba(25, 25, 25, 0.9)', // Darker background for contrast
+      background: '#0D0D0D',
+      backdrop: `
+        rgba(0,0,0,0.8)
+        url("/cinipop.webp")
+        left top
+        no-repeat
+      `
     });
     
     if (parkingResult.isConfirmed) {
@@ -190,35 +197,36 @@ const Tickets = () => {
       : null;
 
       const result = await Swal.fire({
-        title: '<span class="text-3xl font-bold text-yellow-400">🎥 Confirm Your Booking</span>',
+        title: `<span class="text-3xl font-cinzel font-bold text-[#C8A951]" style="text-shadow: 0 0 10px rgba(200, 169, 81, 0.3);">Confirm Your Booking</span>`,
         html: `
-          <div class="text-gray-200 text-lg">
-            <p><span class="font-semibold">Movie:</span> ${movie}</p>
-            <p><span class="font-semibold">Screen:</span> ${screen}</p>
-            <p><span class="font-semibold">Timing:</span> ${timing}</p>
-            <p><span class="font-semibold">Seats:</span> ${actualSeats.join(', ')}</p>
-            <p><span class="font-semibold">Total Seat Cost:</span> $${selectedSeats.reduce((acc, seatIndex) => {
+          <div class="text-[#F5F5F5] text-lg font-poppins">
+            <p class="mb-2"><span class="text-[#C8A951] font-medium">Movie:</span> ${movie}</p>
+            <p class="mb-2"><span class="text-[#C8A951] font-medium">Screen:</span> ${screen}</p>
+            <p class="mb-2"><span class="text-[#C8A951] font-medium">Timing:</span> ${timing}</p>
+            <p class="mb-2"><span class="text-[#C8A951] font-medium">Seats:</span> ${actualSeats.join(', ')}</p>
+            <p class="mb-2"><span class="text-[#C8A951] font-medium">Seat Cost:</span> $${selectedSeats.reduce((acc, seatIndex) => {
               const category = Object.keys(seatCategories).find((cat) => seatCategories[cat].includes(seatIndex));
               return acc + (seatPrice[category] || 0);
             }, 0)}</p>
-            ${parkingDetails ? `<p><span class="font-semibold">Parking Cost:</span> $${parkingCost}</p>` : ''}
-            <p class="mt-4 text-xl font-bold"><span class="text-yellow-400">Total Cost:</span> $${totalCost}</p>
+            ${parkingDetails ? `<p class="mb-2"><span class="text-[#C8A951] font-medium">Parking Cost:</span> $${parkingCost}</p>` : ''}
+            <p class="mt-4 pt-3 border-t border-[#C8A951]/30 text-xl font-cinzel font-bold"><span class="text-[#C8A951]">Total Cost:</span> $${totalCost}</p>
           </div>
         `,
         icon: 'info',
         showCancelButton: true,
-        confirmButtonText: '<span class="px-4 py-2 rounded-full">Proceed to Payment</span>',
-        cancelButtonText: '<span class="px-4 py-2 rounded-full">Cancel</span>',
-        confirmButtonColor: '#10B981', // Tailwind's emerald-500
-        cancelButtonColor: '#EF4444', // Tailwind's red-500
+        confirmButtonText: '<span class="px-6">Proceed to Payment</span>',
+        cancelButtonText: '<span class="px-6">Cancel</span>',
+        confirmButtonColor: '#0D0D0D',
+        cancelButtonColor: '#0D0D0D',
         customClass: {
-          popup: 'bg-gradient-to-r from-blue-700 to-purple-800 p-8 rounded-lg shadow-xl',
-          title: 'text-center font-bold text-yellow-400',
-          htmlContainer: 'text-left text-gray-200',
-          confirmButton: 'bg-emerald-500 text-white px-6 py-2 rounded-full hover:bg-emerald-600 transition-all',
-          cancelButton: 'bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition-all',
+          popup: 'bg-[#0D0D0D] border border-[#C8A951]/30 p-8 shadow-2xl',
+          title: 'text-center mb-4',
+          htmlContainer: 'text-left',
+          confirmButton: 'border border-[#C8A951] text-[#F5F5F5] hover:bg-[#C8A951]/10 transition-all font-cinzel',
+          cancelButton: 'border border-[#E50914] text-[#F5F5F5] hover:bg-[#E50914]/10 transition-all font-cinzel',
+          icon: 'text-[#C8A951]'
         },
-        background: 'rgba(25, 25, 25, 0.9)', // Dark background for better contrast
+        background: '#0D0D0D',
       });
       
 
@@ -275,17 +283,53 @@ const Tickets = () => {
 
   const handleConfirmParking = () => {
     if (!phone) {
-      Swal.fire('Error', 'Please enter your phone number.', 'error');
+      Swal.fire({
+        title: '<span class="font-cinzel text-xl font-bold text-[#E50914]">Attention Required</span>',
+        html: '<p class="font-poppins text-[#F5F5F5]">Please enter your phone number for parking reservation.</p>',
+        icon: 'error',
+        background: '#0D0D0D',
+        confirmButtonColor: '#0D0D0D',
+        confirmButtonText: 'Understood',
+        customClass: {
+          confirmButton: 'px-6 py-2 text-[#F5F5F5] font-cinzel border border-[#E50914] hover:bg-[#E50914]/10 transition-all duration-300',
+          title: 'mb-4',
+          popup: 'border border-[#E50914]/30'
+        }
+      });
       return;
     }
 
     if (selectedTwoWheelerSlots.length > 0 && selectedTwoWheelerSlots.some((_, index) => !vehicleNumbers.twoWheeler[index])) {
-      Swal.fire('Error', 'Please enter vehicle numbers for all selected two-wheeler parking slots.', 'error');
+      Swal.fire({
+        title: '<span class="font-cinzel text-xl font-bold text-[#E50914]">Attention Required</span>',
+        html: '<p class="font-poppins text-[#F5F5F5]">Please enter vehicle numbers for all selected two-wheeler parking slots.</p>',
+        icon: 'error',
+        background: '#0D0D0D',
+        confirmButtonColor: '#0D0D0D',
+        confirmButtonText: 'Understood',
+        customClass: {
+          confirmButton: 'px-6 py-2 text-[#F5F5F5] font-cinzel border border-[#E50914] hover:bg-[#E50914]/10 transition-all duration-300',
+          title: 'mb-4',
+          popup: 'border border-[#E50914]/30'
+        }
+      });
       return;
     }
 
     if (selectedFourWheelerSlots.length > 0 && selectedFourWheelerSlots.some((_, index) => !vehicleNumbers.fourWheeler[index])) {
-      Swal.fire('Error', 'Please enter vehicle numbers for all selected four-wheeler parking slots.', 'error');
+      Swal.fire({
+        title: '<span class="font-cinzel text-xl font-bold text-[#E50914]">Attention Required</span>',
+        html: '<p class="font-poppins text-[#F5F5F5]">Please enter vehicle numbers for all selected four-wheeler parking slots.</p>',
+        icon: 'error',
+        background: '#0D0D0D',
+        confirmButtonColor: '#0D0D0D',
+        confirmButtonText: 'Understood',
+        customClass: {
+          confirmButton: 'px-6 py-2 text-[#F5F5F5] font-cinzel border border-[#E50914] hover:bg-[#E50914]/10 transition-all duration-300',
+          title: 'mb-4',
+          popup: 'border border-[#E50914]/30'
+        }
+      });
       return;
     }
 
@@ -293,17 +337,17 @@ const Tickets = () => {
   };
 
   return (
-<div className="flex flex-col items-center p-4">
+<div className="flex flex-col items-center p-6 bg-[#0D0D0D] min-h-screen">
   {currentUser && (
-    <div className="text-center text-lg mb-6 text-green-400">
+    <div className="text-center text-lg mb-6 text-[#C8A951] font-cinzel">
       <p>Welcome, {currentUser.email}</p>
     </div>
   )}
-  <h1 className="text-3xl font-bold text-center text-yellow-500 mb-6">
+  <h1 className="text-3xl font-playfair font-bold text-center text-[#C8A951] mb-8" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>
     {movie} - Screen {screen} - {timing}
   </h1>
-  <h1 className="text-2xl md:text-4xl font-semibold mb-4">Select Your Seats</h1>
-  <div className="grid grid-cols-8 gap-2 sm:gap-3 md:gap-4 lg:gap-6 p-4 border rounded shadow-md">
+  <h1 className="text-2xl md:text-4xl font-cinzel font-semibold mb-6 text-[#F5F5F5] border-b border-[#C8A951]/30 pb-2" style={{textShadow: '0 0 8px rgba(200, 169, 81, 0.2)'}}>Select Your Seats</h1>
+  <div className="grid grid-cols-8 gap-2 sm:gap-3 md:gap-4 lg:gap-6 p-6 border border-[#C8A951]/30 bg-[#121212]" style={{boxShadow: '0 0 20px rgba(0, 0, 0, 0.7), 0 0 10px rgba(200, 169, 81, 0.15)'}}>
     {Array.from({ length: totalSeats }).map((_, index) => {
       const row = rowLabels[Math.floor(index / 8)];
       const seatNumber = (index % 8) + 1;
@@ -313,61 +357,85 @@ const Tickets = () => {
       return (
         <div
           key={index}
-          className={`seat w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex justify-center items-center rounded text-white cursor-pointer transition-all duration-300 ease-in-out transform ${
+          className={`seat w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex justify-center items-center text-white cursor-pointer transition-all duration-300 ${
             isSelected
-              ? 'bg-green-500 scale-105 shadow-lg'
-              : 'bg-gray-600 hover:bg-gray-500 hover:scale-110'
+              ? 'bg-[#C8A951] border border-[#C8A951]/50'
+              : 'bg-[#1A1A1A] border border-[#C8A951]/20 hover:bg-[#C8A951]/10'
           } ${
             category === 'Gold'
-              ? 'border-2 border-yellow-400'
+              ? 'border border-[#C8A951]'
               : category === 'Platinum'
-              ? 'border-2 border-blue-400'
+              ? 'border border-[#E0E0E0]'
               : category === 'Silver'
-              ? 'border-2 border-gray-400'
+              ? 'border border-[#C0C0C0]'
               : category === 'Diamond'
-              ? 'border-2 border-indigo-400'
-              : 'border-2 border-red-400'
+              ? 'border border-[#B9F2FF]'
+              : 'border border-[#E50914]'
           }`}
           onClick={() => handleSeatSelection(index)}
-          title={`Row: ${row}, Seat: ${seatNumber}`}
+          title={`Row: ${row}, Seat: ${seatNumber}, ${category} - $${seatPrice[category]}`}
+          style={{
+            boxShadow: isSelected ? '0 0 10px rgba(200, 169, 81, 0.4)' : 'none'
+          }}
         >
           {`${row}${seatNumber}`}
         </div>
       );
     })}
   </div>
-
-
+  
+  <div className="flex flex-wrap justify-center gap-4 mt-6">
+    {Object.keys(seatPrice).map(category => (
+      <div key={category} className="flex items-center gap-2">
+        <div className={`w-4 h-4 ${
+          category === 'Gold' ? 'bg-[#C8A951]/60 border border-[#C8A951]' :
+          category === 'Platinum' ? 'bg-[#E0E0E0]/60 border border-[#E0E0E0]' :
+          category === 'Silver' ? 'bg-[#C0C0C0]/60 border border-[#C0C0C0]' :
+          category === 'Diamond' ? 'bg-[#B9F2FF]/60 border border-[#B9F2FF]' :
+          'bg-[#E50914]/60 border border-[#E50914]'
+        }`}></div>
+        <span className="text-[#F5F5F5] font-poppins">{category} - ${seatPrice[category]}</span>
+      </div>
+    ))}
+  </div>
 
       {/* Parking Assistance Section */}
       {showParkingPrompt && (
-  <div className="parking-section w-full md:w-3/4 lg:w-1/2 mt-8 p-6 border rounded shadow-md bg-gray-100 transform transition-transform duration-500 ease-in-out hover:scale-105">
-    <h2 className="text-xl font-bold mb-4 text-center text-yellow-600">
-      Parking Assistance
+  <div className="parking-section w-full md:w-3/4 lg:w-2/3 mt-12 p-8 border border-[#C8A951]/30 bg-[#0D0D0D]" style={{boxShadow: '0 0 20px rgba(0, 0, 0, 0.7), 0 0 10px rgba(200, 169, 81, 0.15)'}}>
+    <h2 className="text-2xl font-cinzel font-semibold mb-6 text-center text-[#C8A951] border-b border-[#C8A951]/30 pb-2" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>
+      Luxury Parking Service
     </h2>
-    <div className="mb-4">
-      <label className="block font-semibold mb-2 text-gray-700">
-        Phone Number
+    <div className="mb-6">
+      <label className="block font-cinzel font-medium mb-2 text-[#F5F5F5]">
+        Contact Number
         <input
           type="tel"
           value={phone}
           onChange={handlePhoneNumberChange}
-          className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300 transition-all duration-300 ease-in-out transform hover:scale-105"
+          className="w-full p-3 bg-[#121212] border border-[#C8A951]/30 text-[#F5F5F5] focus:outline-none focus:border-[#C8A951] transition-all duration-300 font-poppins mt-1"
+          style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
           placeholder="Enter 10-digit phone number"
         />
       </label>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
-        <h3 className="text-lg font-semibold mb-2">Two-Wheeler Slots</h3>
+        <h3 className="text-xl font-cinzel font-medium mb-4 text-[#C8A951] border-b border-[#C8A951]/30 pb-2" style={{textShadow: '0 0 8px rgba(200, 169, 81, 0.2)'}}>
+          <FontAwesomeIcon icon={faMotorcycle} className="mr-2" /> Two-Wheeler Slots
+        </h3>
         <div className="grid grid-cols-5 gap-2">
           {twoWheelerSlots.map((slot, index) => (
             <div
               key={slot}
-              className={`slot p-2 text-center cursor-pointer border rounded transition-all duration-300 ease-in-out transform hover:scale-110 ${
-                selectedTwoWheelerSlots.includes(slot) ? 'bg-green-500 text-white' : 'bg-gray-300 hover:bg-gray-400'
+              className={`slot p-2 text-center cursor-pointer border transition-all duration-300 ${
+                selectedTwoWheelerSlots.includes(slot) 
+                ? 'bg-[#C8A951]/20 text-[#C8A951] border-[#C8A951]' 
+                : 'bg-[#121212] border-[#C8A951]/20 text-[#F5F5F5] hover:bg-[#C8A951]/10'
               }`}
+              style={{
+                boxShadow: selectedTwoWheelerSlots.includes(slot) ? '0 0 10px rgba(200, 169, 81, 0.3)' : 'none'
+              }}
               onClick={() => handleSlotSelection(slot, 'Two-Wheeler')}
             >
               {slot}
@@ -375,14 +443,15 @@ const Tickets = () => {
           ))}
         </div>
         {selectedTwoWheelerSlots.map((slot, index) => (
-          <div key={slot} className="mt-2">
-            <label className="block font-semibold text-gray-700">
-              Vehicle Number for {slot}
+          <div key={slot} className="mt-3">
+            <label className="block font-poppins text-[#F5F5F5]">
+              Vehicle Number for <span className="text-[#C8A951] font-medium">{slot}</span>
               <input
                 type="text"
                 value={vehicleNumbers.twoWheeler[index] || ''}
                 onChange={(e) => handleVehicleNumberChange(e, 'twoWheeler', index)}
-                className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300 transition-all duration-300 ease-in-out transform hover:scale-105"
+                className="w-full p-2 mt-1 bg-[#121212] border border-[#C8A951]/30 text-[#F5F5F5] focus:outline-none focus:border-[#C8A951] transition-all duration-300 font-poppins"
+                style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
                 placeholder="Enter vehicle number"
               />
             </label>
@@ -391,14 +460,21 @@ const Tickets = () => {
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-2">Four-Wheeler Slots</h3>
+        <h3 className="text-xl font-cinzel font-medium mb-4 text-[#C8A951] border-b border-[#C8A951]/30 pb-2" style={{textShadow: '0 0 8px rgba(200, 169, 81, 0.2)'}}>
+          <FontAwesomeIcon icon={faCar} className="mr-2" /> Four-Wheeler Slots
+        </h3>
         <div className="grid grid-cols-5 gap-2">
           {fourWheelerSlots.map((slot, index) => (
             <div
               key={slot}
-              className={`slot p-2 text-center cursor-pointer border rounded transition-all duration-300 ease-in-out transform hover:scale-110 ${
-                selectedFourWheelerSlots.includes(slot) ? 'bg-green-500 text-white' : 'bg-gray-300 hover:bg-gray-400'
+              className={`slot p-2 text-center cursor-pointer border transition-all duration-300 ${
+                selectedFourWheelerSlots.includes(slot) 
+                ? 'bg-[#C8A951]/20 text-[#C8A951] border-[#C8A951]' 
+                : 'bg-[#121212] border-[#C8A951]/20 text-[#F5F5F5] hover:bg-[#C8A951]/10'
               }`}
+              style={{
+                boxShadow: selectedFourWheelerSlots.includes(slot) ? '0 0 10px rgba(200, 169, 81, 0.3)' : 'none'
+              }}
               onClick={() => handleSlotSelection(slot, 'Four-Wheeler')}
             >
               {slot}
@@ -406,14 +482,15 @@ const Tickets = () => {
           ))}
         </div>
         {selectedFourWheelerSlots.map((slot, index) => (
-          <div key={slot} className="mt-2">
-            <label className="block font-semibold text-gray-700">
-              Vehicle Number for {slot}
+          <div key={slot} className="mt-3">
+            <label className="block font-poppins text-[#F5F5F5]">
+              Vehicle Number for <span className="text-[#C8A951] font-medium">{slot}</span>
               <input
                 type="text"
                 value={vehicleNumbers.fourWheeler[index] || ''}
                 onChange={(e) => handleVehicleNumberChange(e, 'fourWheeler', index)}
-                className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-yellow-300 transition-all duration-300 ease-in-out transform hover:scale-105"
+                className="w-full p-2 mt-1 bg-[#121212] border border-[#C8A951]/30 text-[#F5F5F5] focus:outline-none focus:border-[#C8A951] transition-all duration-300 font-poppins"
+                style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
                 placeholder="Enter vehicle number"
               />
             </label>
@@ -422,10 +499,11 @@ const Tickets = () => {
       </div>
     </div>
 
-    <div className="mt-6 flex justify-end">
+    <div className="mt-8 flex justify-end">
       <button
         onClick={handleConfirmParking}
-        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold transition-all duration-300 ease-in-out transform hover:scale-110"
+        className="bg-[#0D0D0D] border border-[#C8A951] text-[#F5F5F5] px-6 py-3 font-cinzel font-semibold transition-all duration-300 hover:bg-[#C8A951]/10"
+        style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.2)'}}
       >
         Confirm Parking
       </button>
@@ -434,11 +512,13 @@ const Tickets = () => {
 )}
 
 {/* Confirm Booking Button */}
-<div className="mt-8">
+<div className="mt-10 flex justify-center">
   <button
     onClick={handleConfirm}
-    className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg text-lg font-bold shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110"
+    className="bg-[#0D0D0D] border border-[#C8A951] text-[#F5F5F5] px-10 py-4 text-xl font-cinzel font-bold transition-all duration-300 hover:bg-[#C8A951]/10 flex items-center gap-2"
+    style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
   >
+    <FontAwesomeIcon icon={faDollarSign} className="text-[#C8A951]" />
     Confirm Booking
   </button>
 </div>

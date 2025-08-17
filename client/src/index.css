@@ -1,19 +1,79 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Luxury Cinematic Theme Colors */
+:root {
+  --bg-deep-black: #0D0D0D;
+  --luxury-gold: #C8A951;
+  --cinematic-red: #E50914;
+  --soft-white: #F5F5F5;
+}
+
+/* Tailwind Component Classes */
+@layer components {
+  .btn-gold {
+    @apply bg-[#0D0D0D] text-[#F5F5F5] border border-[#C8A951] font-poppins transition-all duration-300;
+    box-shadow: 0 0 10px rgba(200, 169, 81, 0.2);
+  }
+
+  .btn-gold:hover {
+    @apply shadow-lg;
+    box-shadow: 0 0 15px rgba(200, 169, 81, 0.4);
+  }
+
+  .card-luxury {
+    @apply bg-[#0D0D0D] text-[#F5F5F5] border border-[#C8A951]/30;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .heading-luxury {
+    @apply font-playfair text-[#C8A951];
+    text-shadow: 0 0 10px rgba(200, 169, 81, 0.3);
+  }
+
+  .subheading-luxury {
+    @apply font-cinzel text-[#F5F5F5];
+  }
+
+  .divider-luxury {
+    @apply h-px bg-gradient-to-r from-[#C8A951] via-[#E50914] to-[#C8A951];
+    box-shadow: 0 0 5px rgba(200, 169, 81, 0.3);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C8A951;
+  border: 2px solid #0D0D0D;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E50914;
+}
+
+/* Original Seat Classes */
 .seat-platinum {
-    background-color: #1e90ff;
-  }
-  
-  .seat-gold {
-    background-color: #ffd700;
-  }
-  
-  .seat-silver {
-    background-color: #c0c0c0;
-  }
-  
-  .seat-balcony {
-    background-color: #9370db;
-  }
-  
+  background-color: #1e90ff;
+}
+
+.seat-gold {
+  background-color: #C8A951;
+}
+
+.seat-silver {
+  background-color: #c0c0c0;
+}
+
+.seat-balcony {
+  background-color: #9370db;
+}

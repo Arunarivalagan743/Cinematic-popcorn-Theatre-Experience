@@ -40,7 +40,8 @@ export default function OAuth() {
 <button
   type="button"
   onClick={handleGoogleClick}
-  className="bg-gradient-to-r from-teal-400 to-blue-500 text-white font-semibold p-3 text-lg w-full max-w-md rounded-lg shadow-md uppercase tracking-wide hover:from-teal-500 hover:to-blue-600 transition duration-300 transform hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-80"
+  className="bg-[#0D0D0D] text-[#F5F5F5] font-poppins font-medium p-3 text-lg w-full max-w-md shadow-md uppercase tracking-wide transition duration-300 transform hover:shadow-[#C8A951]/30 disabled:opacity-80 border border-[#C8A951]"
+  style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.2)'}}
 >
   Continue with Google
 </button>

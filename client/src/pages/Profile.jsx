@@ -54,13 +54,14 @@ export default function Profile() {
   };
 
   const handleDeleteAccount = async () => {
-    const confirmDelete = window.confirm("Are you sure you want to delete your account?");
+    const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
     if (!confirmDelete) return;
 
     try {
       dispatch(deleteUserStart());
       const res = await fetch(`/api/user/delete/${currentUser._id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       const data = await res.json();
       if (data.success === false) {
@@ -84,63 +85,67 @@ export default function Profile() {
 
   return (
     <div className="mt-24 p-8 max-w-lg mx-auto relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-800 opacity-80 transform transition duration-500 animate-fadeIn"></div>
-      <div className="relative z-10 p-8 rounded-lg shadow-lg bg-white bg-opacity-90 backdrop-filter backdrop-blur-md transform transition duration-300 hover:scale-105">
-        <h1 className="text-3xl font-semibold text-center my-5 text-purple-700">Profile</h1>
+      <div className="absolute inset-0 bg-[#0D0D0D] opacity-95 transform transition duration-500 animate-fadeIn"></div>
+      <div className="relative z-10 p-8 bg-[#0D0D0D] border border-[#C8A951]/30 shadow-lg transform transition duration-300 hover:scale-102" style={{boxShadow: '0 0 25px rgba(0, 0, 0, 0.7), 0 0 15px rgba(200, 169, 81, 0.2)'}}>
+        <h1 className="text-3xl font-playfair font-semibold text-center my-6 text-[#C8A951]" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>Profile</h1>
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
           <img
             src={currentUser.profilePicture || 'default-profile.png'}
             alt="profile"
-            className="h-24 w-24 self-center cursor-pointer rounded-full object-cover mt-2 border-4 border-purple-500 shadow-sm transition-transform duration-300 hover:scale-110"
+            className="h-24 w-24 self-center cursor-pointer object-cover mt-2 border-2 border-[#C8A951] shadow-md transition-transform duration-300 hover:scale-105"
+            style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
           />
-          <div className="flex items-center border-b-2 border-gray-300 focus-within:border-purple-500 transition duration-300">
-            <FaUser className="text-gray-500 mr-2" />
+          <div className="flex items-center border-b border-[#C8A951]/30 focus-within:border-[#C8A951] transition duration-300 pb-1">
+            <FaUser className="text-[#C8A951] mr-3" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
             <input
               type="text"
               id="username"
               placeholder="Username"
-              className="bg-gray-100 bg-opacity-90 p-3 w-full focus:outline-none transition duration-300 hover:bg-opacity-100"
+              className="bg-[#0D0D0D] p-3 w-full focus:outline-none transition duration-300 text-[#F5F5F5] font-poppins"
+              style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
               value={formData.username}
               onChange={handleChange}
             />
           </div>
-          <div className="flex items-center border-b-2 border-gray-300 focus-within:border-purple-500 transition duration-300">
-            <FaEnvelope className="text-gray-500 mr-2" />
+          <div className="flex items-center border-b border-[#C8A951]/30 focus-within:border-[#C8A951] transition duration-300 pb-1">
+            <FaEnvelope className="text-[#C8A951] mr-3" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
             <input
               type="email"
               id="email"
               placeholder="Email"
-              className="bg-gray-100 bg-opacity-90 p-3 w-full focus:outline-none transition duration-300 hover:bg-opacity-100"
+              className="bg-[#0D0D0D] p-3 w-full focus:outline-none transition duration-300 text-[#F5F5F5] font-poppins"
+              style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
               value={formData.email}
               onChange={handleChange}
             />
           </div>
-          <div className="flex items-center border-b-2 border-gray-300 focus-within:border-purple-500 transition duration-300">
-            <FaLock className="text-gray-500 mr-2" />
+          <div className="flex items-center border-b border-[#C8A951]/30 focus-within:border-[#C8A951] transition duration-300 pb-1">
+            <FaLock className="text-[#C8A951] mr-3" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
             <input
               type="password"
               id="password"
               placeholder="Password"
-              className="bg-gray-100 bg-opacity-90 p-3 w-full focus:outline-none transition duration-300 hover:bg-opacity-100"
+              className="bg-[#0D0D0D] p-3 w-full focus:outline-none transition duration-300 text-[#F5F5F5] font-poppins"
+              style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
               onChange={handleChange}
             />
           </div>
-          <button className="bg-purple-600 text-white py-3 rounded-lg uppercase hover:bg-purple-700 transition duration-300">
-            {loading ? 'Loading...' : 'Update'}
+          <button className="bg-[#0D0D0D] border border-[#C8A951] text-[#F5F5F5] py-3 uppercase font-cinzel transition-all duration-300 hover:shadow-lg mt-4" 
+            style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.2)'}}>
+            {loading ? 'Loading...' : 'Update Profile'}
           </button>
         </form>
-        <div className="flex justify-between mt-6">
-         
+        <div className="flex justify-end mt-8">
           <span
             onClick={handleSignOut}
-            className="flex items-center text-purple-700 cursor-pointer hover:text-purple-500 transition duration-300"
+            className="flex items-center text-[#C8A951] cursor-pointer hover:text-[#E50914] transition duration-300 border-b border-transparent hover:border-[#E50914] pb-1 font-poppins"
           >
-            <FaSignOutAlt className="mr-1" />
+            <FaSignOutAlt className="mr-2" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
             Sign out
           </span>
         </div>
-        <p className="text-red-600 mt-5">{error && 'Something went wrong!'}</p>
-        <p className="text-green-600 mt-5">{updateSuccess && 'Profile updated successfully!'}</p>
+        <p className="text-[#E50914] mt-5 font-poppins">{error && 'Something went wrong!'}</p>
+        <p className="text-[#C8A951] mt-5 font-poppins">{updateSuccess && 'Profile updated successfully!'}</p>
       </div>
     </div>
   );

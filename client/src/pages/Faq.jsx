@@ -99,21 +99,23 @@ const FAQ = () => {
   
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-100 to-pink-50 text-white p-4 font-sans">
-      <div className="text-center mb-8">
+    <div className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] p-6 font-poppins">
+      <div className="text-center mb-12">
         <button
-          className={`px-4 py-2 font-semibold rounded-lg ${
-            activeTab === "faq" ? "bg-yellow-500 text-gray-900" : "bg-gray-800 text-yellow-500"
-          } transition duration-500 ease-in-out transform hover:scale-105 hover:shadow-lg mx-2`}
+          className={`px-6 py-3 font-playfair font-semibold ${
+            activeTab === "faq" ? "bg-[#C8A951] text-[#0D0D0D]" : "bg-[#0D0D0D] text-[#C8A951] border border-[#C8A951]"
+          } transition duration-300 ease-in-out hover:shadow-md mx-3`}
           onClick={() => handleTabSwitch("faq")}
+          style={{boxShadow: activeTab === "faq" ? '0 0 10px rgba(200, 169, 81, 0.4)' : 'none'}}
         >
           FAQ
         </button>
         <button
-          className={`px-4 py-2 font-semibold rounded-lg ${
-            activeTab === "contact" ? "bg-yellow-500 text-gray-900" : "bg-gray-800 text-yellow-500"
-          } transition duration-500 ease-in-out transform hover:scale-105 hover:shadow-lg mx-2`}
+          className={`px-6 py-3 font-playfair font-semibold ${
+            activeTab === "contact" ? "bg-[#C8A951] text-[#0D0D0D]" : "bg-[#0D0D0D] text-[#C8A951] border border-[#C8A951]"
+          } transition duration-300 ease-in-out hover:shadow-md mx-3`}
           onClick={() => handleTabSwitch("contact")}
+          style={{boxShadow: activeTab === "contact" ? '0 0 10px rgba(200, 169, 81, 0.4)' : 'none'}}
         >
           Contact
         </button>
@@ -121,30 +123,32 @@ const FAQ = () => {
 
       {activeTab === "faq" && (
         <div>
-          <h1 className="text-4xl font-bold text-center mb-12 text-yellow-500 tracking-wider animate-pulse">
-            <FontAwesomeIcon icon={faQuestionCircle} className="mr-3 text-yellow-400" />
+          <h1 className="text-4xl font-playfair font-bold text-center mb-12 text-[#C8A951] tracking-wider" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>
+            <FontAwesomeIcon icon={faQuestionCircle} className="mr-3 text-[#C8A951]" style={{filter: 'drop-shadow(0 0 5px rgba(200, 169, 81, 0.4))'}} />
             Frequently Asked Questions
           </h1>
           <div className="max-w-4xl mx-auto space-y-6">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="p-6 bg-gradient-to-r from-gray-800 to-gray-700 bg-opacity-90 rounded-lg shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl"
+                className="p-6 bg-[#0D0D0D] border border-[#C8A951]/30 shadow-lg transition-all transform hover:scale-102 hover:border-[#C8A951]/50"
+                style={{boxShadow: '0 0 15px rgba(0, 0, 0, 0.5)'}}
               >
                 <button
-                  className="w-full flex justify-between items-center text-left text-lg font-semibold text-gray-300"
+                  className="w-full flex justify-between items-center text-left text-lg font-cinzel font-semibold text-[#F5F5F5]"
                   onClick={() => toggleFAQ(index)}
                 >
                   {faq.question}
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`text-yellow-400 transition-transform duration-300 ${
+                    className={`text-[#C8A951] transition-transform duration-300 ${
                       openFAQ === index ? "rotate-180" : ""
                     }`}
+                    style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}}
                   />
                 </button>
                 {openFAQ === index && (
-                  <p className="mt-4 text-gray-400 transition-opacity duration-500 ease-in-out bg-gray-900 bg-opacity-70 p-4 rounded-lg shadow-md">
+                  <p className="mt-5 text-[#F5F5F5]/90 transition-opacity duration-500 ease-in-out bg-[#111111] p-5 border-l-2 border-[#C8A951] font-poppins" style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.5)'}}>
                     {faq.answer}
                   </p>
                 )}
@@ -153,28 +157,30 @@ const FAQ = () => {
           </div>
 
           {/* Ask a Question Form */}
-          <div className="max-w-2xl mx-auto mt-12 space-y-4">
-            <h2 className="text-2xl font-semibold text-center text-yellow-500">Ask a Question</h2>
-            <form onSubmit={handleQuestionSubmit} className="space-y-4 bg-gradient-to-br from-purple-300 to-blue-200 p-6 rounded-lg shadow-lg">
+          <div className="max-w-2xl mx-auto mt-16 space-y-6">
+            <h2 className="text-2xl font-cinzel font-semibold text-center text-[#C8A951]" style={{textShadow: '0 0 8px rgba(200, 169, 81, 0.3)'}}>Ask a Question</h2>
+            <form onSubmit={handleQuestionSubmit} className="space-y-6 bg-[#0D0D0D] border border-[#C8A951]/20 p-8 shadow-lg" style={{boxShadow: '0 0 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(200, 169, 81, 0.2)'}}>
               <div className="flex items-center space-x-4">
-                <FontAwesomeIcon icon={faUser} className="text-gray-300" />
+                <FontAwesomeIcon icon={faUser} className="text-[#C8A951]" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
                 <input
                   type="email"
                   name="userEmail"
                   value={questionData.userEmail}
                   onChange={handleQuestionChange}
-                  className="w-full mt-2 p-2 rounded bg-gray-700 bg-opacity-80 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                  className="w-full p-3 bg-[#0D0D0D] border border-[#C8A951]/30 text-[#F5F5F5] focus:outline-none focus:border-[#C8A951] focus:shadow-md transition duration-300 font-poppins"
+                  style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
                   placeholder="Your Email"
                   required
                 />
               </div>
               <div className="flex items-center space-x-4">
-                <FontAwesomeIcon icon={faQuestionCircle} className="text-gray-300" />
+                <FontAwesomeIcon icon={faQuestionCircle} className="text-[#C8A951]" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
                 <textarea
                   name="userQuestion"
                   value={questionData.userQuestion}
                   onChange={handleQuestionChange}
-                  className="w-full mt-2 p-2 rounded bg-gray-700 bg-opacity-80 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                  className="w-full p-3 bg-[#0D0D0D] border border-[#C8A951]/30 text-[#F5F5F5] focus:outline-none focus:border-[#C8A951] focus:shadow-md transition duration-300 font-poppins"
+                  style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
                   rows="4"
                   placeholder="Your Question"
                   required
@@ -182,9 +188,10 @@ const FAQ = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none"
+                className="w-full bg-[#0D0D0D] border border-[#C8A951] text-[#F5F5F5] font-playfair font-semibold py-3 px-4 transition-all duration-300 hover:shadow-lg focus:outline-none"
+                style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.2)'}}
               >
-                <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
+                <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-[#C8A951]" />
                 Submit Question
               </button>
             </form>
@@ -194,43 +201,46 @@ const FAQ = () => {
 
       {activeTab === "contact" && (
         <div>
-          <h1 className="text-4xl font-bold text-center mb-12 text-yellow-500 tracking-wider animate-pulse">
-            <FontAwesomeIcon icon={faEnvelope} className="mr-3 text-yellow-400" />
+          <h1 className="text-4xl font-playfair font-bold text-center mb-12 text-[#C8A951] tracking-wider" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>
+            <FontAwesomeIcon icon={faEnvelope} className="mr-3 text-[#C8A951]" style={{filter: 'drop-shadow(0 0 5px rgba(200, 169, 81, 0.4))'}} />
             Contact Us
           </h1>
           <div className="max-w-2xl mx-auto space-y-8">
-            <form onSubmit={handleSubmit} className="space-y-4 bg-gradient-to-br from-purple-300 to-blue-200 p-8 rounded-lg shadow-lg">
+            <form onSubmit={handleSubmit} className="space-y-6 bg-[#0D0D0D] border border-[#C8A951]/20 p-8 shadow-lg" style={{boxShadow: '0 0 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(200, 169, 81, 0.2)'}}>
               <div className="flex items-center space-x-4">
-                <FontAwesomeIcon icon={faUser} className="text-gray-300" />
+                <FontAwesomeIcon icon={faUser} className="text-[#C8A951]" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full mt-2 p-2 rounded bg-gray-700 bg-opacity-80 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                  className="w-full p-3 bg-[#0D0D0D] border border-[#C8A951]/30 text-[#F5F5F5] focus:outline-none focus:border-[#C8A951] focus:shadow-md transition duration-300 font-poppins"
+                  style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
                   placeholder="Your Name"
                   required
                 />
               </div>
               <div className="flex items-center space-x-4">
-                <FontAwesomeIcon icon={faEnvelope} className="text-gray-300" />
+                <FontAwesomeIcon icon={faEnvelope} className="text-[#C8A951]" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full mt-2 p-2 rounded bg-gray-700 bg-opacity-80 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                  className="w-full p-3 bg-[#0D0D0D] border border-[#C8A951]/30 text-[#F5F5F5] focus:outline-none focus:border-[#C8A951] focus:shadow-md transition duration-300 font-poppins"
+                  style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
                   placeholder="Your Email"
                   required
                 />
               </div>
               <div className="flex items-center space-x-4">
-                <FontAwesomeIcon icon={faQuestionCircle} className="text-gray-300" />
+                <FontAwesomeIcon icon={faQuestionCircle} className="text-[#C8A951]" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
                 <textarea
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
-                  className="w-full mt-2 p-2 rounded bg-gray-700 bg-opacity-80 text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                  className="w-full p-3 bg-[#0D0D0D] border border-[#C8A951]/30 text-[#F5F5F5] focus:outline-none focus:border-[#C8A951] focus:shadow-md transition duration-300 font-poppins"
+                  style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.3)'}}
                   rows="4"
                   placeholder="Your Message"
                   required
@@ -238,9 +248,10 @@ const FAQ = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg focus:outline-none"
+                className="w-full bg-[#0D0D0D] border border-[#C8A951] text-[#F5F5F5] font-playfair font-semibold py-3 px-4 transition-all duration-300 hover:shadow-lg focus:outline-none"
+                style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.2)'}}
               >
-                <FontAwesomeIcon icon={faPaperPlane} className="mr-2" />
+                <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-[#C8A951]" />
                 Send Message
               </button>
             </form>

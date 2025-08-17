@@ -9,6 +9,9 @@ module.exports = {
     extend: {
       fontFamily: {
         inter: ["Inter", "sans-serif"],
+        playfair: ["Playfair Display", "serif"],
+        cinzel: ["Cinzel", "serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
       animation: {
         fadeIn: 'fadeIn 1s ease-in forwards',

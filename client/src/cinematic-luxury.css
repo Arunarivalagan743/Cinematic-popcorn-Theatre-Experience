@@ -1,0 +1,81 @@
+/* Luxury Cinematic Theme - Global Styles */
+
+/* Custom button styling */
+.btn-gold {
+  @apply bg-[#0D0D0D] text-[#F5F5F5] border border-[#C8A951] font-poppins transition-all duration-300;
+  box-shadow: 0 0 10px rgba(200, 169, 81, 0.2);
+}
+
+.btn-gold:hover {
+  @apply shadow-lg;
+  box-shadow: 0 0 15px rgba(200, 169, 81, 0.4);
+}
+
+/* Custom card styling */
+.card-luxury {
+  @apply bg-[#0D0D0D] text-[#F5F5F5] border border-[#C8A951]/30;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.card-luxury:hover {
+  box-shadow: 0 0 20px rgba(200, 169, 81, 0.2);
+}
+
+/* Typography classes */
+.heading-luxury {
+  @apply font-playfair text-[#C8A951];
+  text-shadow: 0 0 10px rgba(200, 169, 81, 0.3);
+}
+
+.subheading-luxury {
+  @apply font-cinzel text-[#F5F5F5];
+}
+
+.body-text {
+  @apply font-poppins text-[#F5F5F5];
+}
+
+/* Input fields */
+.input-luxury {
+  @apply bg-[#0D0D0D] text-[#F5F5F5] border border-[#C8A951]/50 focus:border-[#C8A951] focus:ring-1 focus:ring-[#C8A951] outline-none;
+}
+
+/* Accent elements */
+.accent-gold {
+  @apply text-[#C8A951];
+}
+
+.accent-red {
+  @apply text-[#E50914];
+}
+
+/* Dividers */
+.divider-luxury {
+  @apply h-px bg-gradient-to-r from-[#C8A951] via-[#E50914] to-[#C8A951];
+  box-shadow: 0 0 5px rgba(200, 169, 81, 0.3);
+}
+
+/* Luxury background with subtle pattern */
+.bg-luxury {
+  background-color: #0D0D0D;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8a951' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C8A951;
+  border: 2px solid #0D0D0D;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E50914;
+}
