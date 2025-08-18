@@ -25,8 +25,17 @@ export const signin = async (req, res, next) => {
     const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
     const { password: hashedPassword, ...rest } = validUser._doc;
     const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+    
+    // Cookie settings for production
+    const cookieOptions = {
+      httpOnly: true,
+      expires: expiryDate,
+      secure: process.env.NODE_ENV === 'production', // Only secure in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site in production
+    };
+    
     res
-      .cookie('access_token', token, { httpOnly: true, expires: expiryDate })
+      .cookie('access_token', token, cookieOptions)
       .status(200)
       .json(rest);
   } catch (error) {
@@ -41,11 +50,17 @@ export const google = async (req, res, next) => {
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
       const { password: hashedPassword, ...rest } = user._doc;
       const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+      
+      // Cookie settings for production
+      const cookieOptions = {
+        httpOnly: true,
+        expires: expiryDate,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      };
+      
       res
-        .cookie('access_token', token, {
-          httpOnly: true,
-          expires: expiryDate,
-        })
+        .cookie('access_token', token, cookieOptions)
         .status(200)
         .json(rest);
     } else {
@@ -65,11 +80,17 @@ export const google = async (req, res, next) => {
       const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
       const { password: hashedPassword2, ...rest } = newUser._doc;
       const expiryDate = new Date(Date.now() + 3600000); // 1 hour
+      
+      // Cookie settings for production
+      const cookieOptions = {
+        httpOnly: true,
+        expires: expiryDate,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      };
+      
       res
-        .cookie('access_token', token, {
-          httpOnly: true,
-          expires: expiryDate,
-        })
+        .cookie('access_token', token, cookieOptions)
         .status(200)
         .json(rest);
     }

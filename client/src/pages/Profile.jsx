@@ -32,7 +32,8 @@ import {
 } from 'react-icons/fa';
 
 // Import the shared movie image utility
-import { getMovieImage } from '../utils/movieImages';
+import { getMovieImage, imageMap } from '../utils/movieImages';
+import NewMovie from '../images/new.jpg';
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -70,21 +71,42 @@ export default function Profile() {
   }, [activeTab, currentUser]);
 
   const fetchBookings = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.log('No current user found, cannot fetch bookings');
+      return;
+    }
     
+    console.log('Attempting to fetch bookings for user:', currentUser._id);
     setLoadingBookings(true);
     setBookingError(null);
     
     try {
       const response = await axios.get(
         `${backendUrl}/api/user/${currentUser._id}`,
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
       
+      console.log('Bookings fetched successfully:', response.data);
       setBookings(response.data);
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      setBookingError(error.response?.data?.message || error.message || 'Failed to fetch bookings');
+      
+      // More detailed error handling
+      if (error.response?.status === 401) {
+        console.log('Authentication failed - user may need to log in again');
+        setBookingError('Your session has expired. Please log in again.');
+        
+        // Optionally redirect to login or sign out user
+        // dispatch(signOut());
+        // navigate('/signin');
+      } else {
+        setBookingError(error.response?.data?.message || error.message || 'Failed to fetch bookings');
+      }
     } finally {
       setLoadingBookings(false);
     }
@@ -219,6 +241,7 @@ export default function Profile() {
               >
                 <FaTicketAlt className="mr-3" />
                 My Bookings
+                {loadingBookings && <FaSpinner className="ml-auto animate-spin" />}
               </button>
               
               <button
@@ -353,12 +376,30 @@ export default function Profile() {
                 <div className="p-6 text-center">
                   <FaExclamationCircle className="text-[#E50914] text-4xl mb-4 mx-auto" />
                   <p className="text-[#E50914] font-poppins text-lg mb-4">{bookingError}</p>
-                  <button 
-                    onClick={fetchBookings}
-                    className="bg-[#C8A951] text-[#0D0D0D] px-6 py-2 font-poppins hover:bg-[#DFBD69] transition duration-300"
-                  >
-                    Try Again
-                  </button>
+                  <div className="space-y-3">
+                    <button 
+                      onClick={fetchBookings}
+                      className="bg-[#C8A951] text-[#0D0D0D] px-6 py-2 font-poppins hover:bg-[#DFBD69] transition duration-300 mr-3"
+                    >
+                      Try Again
+                    </button>
+                    {bookingError.includes('session has expired') && (
+                      <button 
+                        onClick={() => {
+                          dispatch(signOut());
+                          navigate('/signin');
+                        }}
+                        className="bg-[#E50914] text-[#F5F5F5] px-6 py-2 font-poppins hover:bg-[#E50914]/80 transition duration-300"
+                      >
+                        Sign In Again
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-4 text-xs text-[#F5F5F5]/50 font-poppins">
+                    <p>User ID: {currentUser?._id}</p>
+                    <p>Environment: {process.env.NODE_ENV || 'development'}</p>
+                    <p>Backend URL: {backendUrl}</p>
+                  </div>
                 </div>
               ) : bookings.length === 0 ? (
                 <div className="p-8 text-center">
@@ -374,7 +415,12 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="divide-y divide-[#C8A951]/20">
-                  {bookings.map(booking => (
+                  {bookings.map(booking => {
+                    // Debug logging for movie data
+                    console.log('Booking movie data:', booking.movieId);
+                    console.log('Movie image will be:', getMovieImage(booking.movieId));
+                    
+                    return (
                     <div key={booking._id} className="p-6 hover:bg-[#C8A951]/5 transition-all duration-300">
                       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
                         
@@ -385,7 +431,8 @@ export default function Profile() {
                             alt={booking.movieId?.name || 'Movie'}
                             className="w-16 h-20 lg:w-20 lg:h-28 object-cover rounded-lg shadow-md border border-[#C8A951]/20"
                             onError={(e) => {
-                              e.target.src = '/src/images/new.jpg';
+                              console.log('Movie image failed to load for:', booking.movieId);
+                              e.target.src = NewMovie;
                             }}
                           />
                         </div>
@@ -482,7 +529,8 @@ export default function Profile() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

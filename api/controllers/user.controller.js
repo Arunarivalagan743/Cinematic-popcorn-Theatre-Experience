@@ -1,4 +1,5 @@
 import User from '../models/user.model.js';
+import Booking from '../models/booking.js';
 import { errorHandler } from '../utils/error.js';
 import bcryptjs from 'bcryptjs';
 
@@ -6,6 +7,29 @@ export const test = (req, res) => {
   res.json({
     message: 'API is working!',
   });
+};
+
+// Get user with their bookings
+export const getUserWithBookings = async (req, res, next) => {
+  try {
+    // Verify that the user can only access their own data
+    if (req.user.id !== req.params.id) {
+      return next(errorHandler(401, 'You can only access your own bookings!'));
+    }
+
+    // Find user's bookings
+    const bookings = await Booking.find({ userId: req.params.id })
+      .populate('movieId', 'name genre duration rating')
+      .populate('showtimeId', 'startTime endTime screen')
+      .populate('seats')
+      .populate('parkingSlots.slotId')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+    next(error);
+  }
 };
 
 // update user
