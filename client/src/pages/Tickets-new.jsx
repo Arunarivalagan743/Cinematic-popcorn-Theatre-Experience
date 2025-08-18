@@ -373,7 +373,7 @@ const Tickets = () => {
     };
   }, []);
 
-  // Send OTP to phone number
+  // Send OTP to phone number with email fallback
   const sendOTP = async () => {
     if (!phone || phone.trim() === '') {
       Swal.fire({
@@ -422,41 +422,102 @@ const Tickets = () => {
         return;
       }
 
-      // Production mode with real Firebase
-      // Ensure reCAPTCHA is ready
-      if (!recaptchaVerifier) {
-        console.log('reCAPTCHA not found, creating new one...');
-        const container = document.getElementById('recaptcha-container');
-        if (!container) {
-          throw new Error('reCAPTCHA container not found');
-        }
-        
-        const newVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-          callback: () => {
-            console.log('reCAPTCHA solved');
+      // Production mode with real Firebase - try phone first
+      let otpSentViaPhone = false;
+      
+      try {
+        // Ensure reCAPTCHA is ready
+        if (!recaptchaVerifier) {
+          console.log('reCAPTCHA not found, creating new one...');
+          const container = document.getElementById('recaptcha-container');
+          if (!container) {
+            throw new Error('reCAPTCHA container not found');
           }
-        });
-        setRecaptchaVerifier(newVerifier);
+          
+          const newVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible',
+            callback: () => {
+              console.log('reCAPTCHA solved');
+            }
+          });
+          setRecaptchaVerifier(newVerifier);
+          
+          // Wait a moment for the verifier to be ready
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const result = await signInWithPhoneNumber(auth, formattedPhone, newVerifier);
+          setConfirmationResult(result);
+          otpSentViaPhone = true;
+        } else {
+          const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
+          setConfirmationResult(result);
+          otpSentViaPhone = true;
+        }
+      } catch (firebaseError) {
+        console.error('Firebase OTP failed:', firebaseError);
         
-        // Wait a moment for the verifier to be ready
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const result = await signInWithPhoneNumber(auth, formattedPhone, newVerifier);
-        setConfirmationResult(result);
-      } else {
-        const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
-        setConfirmationResult(result);
+        // Check if it's a billing error or other Firebase issues
+        if (firebaseError.code === 'auth/billing-not-enabled' || 
+            firebaseError.code === 'auth/quota-exceeded' ||
+            firebaseError.message?.includes('billing')) {
+          console.log('Firebase billing issue detected, falling back to email OTP...');
+          
+          // Fallback to email-based OTP
+          try {
+            const backendUrl = 
+              process.env.NODE_ENV === 'production' 
+                ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
+                : 'http://localhost:5000';
+            
+            const emailOtpResponse = await axios.post(`${backendUrl}/api/auth/send-email-otp`, {
+              phone: formattedPhone,
+              email: currentUser?.email || 'fallback@example.com'
+            }, {
+              withCredentials: true
+            });
+            
+            if (emailOtpResponse.data.success) {
+              setConfirmationResult({ 
+                emailMode: true, 
+                phone: formattedPhone,
+                otpId: emailOtpResponse.data.otpId 
+              });
+              otpSentViaPhone = false; // Using email fallback
+              
+              Swal.fire({
+                title: 'OTP Sent via Email!',
+                html: `
+                  <p>Phone verification is temporarily unavailable.</p>
+                  <p>We've sent a verification code to your registered email address:</p>
+                  <p><strong>${currentUser?.email || 'your email'}</strong></p>
+                  <p>Please check your inbox and enter the code below.</p>
+                `,
+                icon: 'info',
+                confirmButtonColor: '#C8A951'
+              });
+            } else {
+              throw new Error('Email OTP service failed');
+            }
+          } catch (emailError) {
+            console.error('Email OTP fallback failed:', emailError);
+            throw firebaseError; // Throw original Firebase error
+          }
+        } else {
+          throw firebaseError; // Re-throw other Firebase errors
+        }
       }
       
       setIsOtpSent(true);
       
-      Swal.fire({
-        title: 'OTP Sent!',
-        text: `Verification code has been sent to ${formattedPhone}`,
-        icon: 'success',
-        confirmButtonColor: '#C8A951'
-      });
+      if (otpSentViaPhone) {
+        Swal.fire({
+          title: 'OTP Sent!',
+          text: `Verification code has been sent to ${formattedPhone}`,
+          icon: 'success',
+          confirmButtonColor: '#C8A951'
+        });
+      }
+      
     } catch (error) {
       console.error('Error sending OTP:', error);
       let errorMessage = 'Failed to send OTP. Please try again.';
@@ -467,6 +528,8 @@ const Tickets = () => {
         errorMessage = 'Too many requests. Please try again later.';
       } else if (error.code === 'auth/argument-error') {
         errorMessage = 'Phone verification setup error. Please refresh the page.';
+      } else if (error.code === 'auth/billing-not-enabled') {
+        errorMessage = 'Phone verification is temporarily unavailable. Please contact support.';
       }
       
       Swal.fire({
@@ -484,7 +547,7 @@ const Tickets = () => {
     }
   };
 
-  // Verify OTP
+  // Verify OTP (supports both Firebase and email OTP)
   const verifyOTP = async () => {
     if (!otp || otp.trim() === '') {
       Swal.fire({
@@ -550,7 +613,60 @@ const Tickets = () => {
         return;
       }
 
-      // Production mode verification
+      // Check if using email-based OTP fallback
+      if (confirmationResult.emailMode) {
+        console.log('Verifying email-based OTP...');
+        
+        const backendUrl = 
+          process.env.NODE_ENV === 'production' 
+            ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
+            : 'http://localhost:5000';
+        
+        const verifyResponse = await axios.post(`${backendUrl}/api/auth/verify-email-otp`, {
+          otpId: confirmationResult.otpId,
+          otp: otp.trim(),
+          phone: confirmationResult.phone
+        }, {
+          withCredentials: true
+        });
+        
+        if (verifyResponse.data.success) {
+          setIsPhoneVerified(true);
+          
+          // Sync phone verification with user profile if user is logged in
+          if (currentUser) {
+            try {
+              const response = await axios.post(
+                `${backendUrl}/api/user/verify-phone/${currentUser._id}`,
+                {
+                  phone: phone,
+                  phoneVerified: true
+                },
+                { withCredentials: true }
+              );
+              
+              // Update Redux store with the new user data
+              dispatch(updateUserSuccess(response.data));
+              
+              console.log('Phone verification synced with profile (email mode):', response.data);
+            } catch (error) {
+              console.error('Error syncing phone verification with profile (email mode):', error);
+            }
+          }
+          
+          Swal.fire({
+            title: 'Phone Verified!',
+            text: 'Your phone number has been successfully verified via email.',
+            icon: 'success',
+            confirmButtonColor: '#C8A951'
+          });
+        } else {
+          throw new Error('Invalid email OTP');
+        }
+        return;
+      }
+
+      // Production mode verification with Firebase
       await confirmationResult.confirm(otp);
       setIsPhoneVerified(true);
       
