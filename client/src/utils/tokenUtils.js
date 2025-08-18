@@ -6,12 +6,11 @@ const backendUrl =
     : 'http://localhost:5000';
 
 // Function to refresh authentication token
-export const refreshAuthToken = async (user) => {
+export const refreshAuthToken = async (userId) => {
   try {
-    // Call the signin endpoint to get a fresh token
-    const response = await axios.post(`${backendUrl}/api/auth/signin`, {
-      email: user.email,
-      password: 'refresh' // This won't work, we need another approach
+    // Call the refresh token endpoint
+    const response = await axios.post(`${backendUrl}/api/auth/refresh-token`, {
+      userId: userId
     }, { withCredentials: true });
     
     return response.data;
@@ -29,6 +28,7 @@ export const validateToken = async () => {
     });
     return response.data;
   } catch (error) {
+    console.error('Token validation failed:', error);
     return null;
   }
 };

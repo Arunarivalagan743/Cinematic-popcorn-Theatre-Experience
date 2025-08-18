@@ -131,3 +131,35 @@ export const refreshToken = async (req, res, next) => {
     next(error);
   }
 };
+
+export const validateToken = async (req, res, next) => {
+  try {
+    const token = req.cookies.access_token || req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({ valid: false, message: 'No token provided' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        // Clear invalid token
+        res.clearCookie('access_token');
+        res.clearCookie('token');
+        return res.status(401).json({ valid: false, message: 'Invalid or expired token' });
+      }
+
+      // Check if user still exists
+      const user = await User.findById(decoded.id);
+      if (!user) {
+        res.clearCookie('access_token');
+        res.clearCookie('token');
+        return res.status(401).json({ valid: false, message: 'User not found' });
+      }
+
+      const { password: hashedPassword, ...rest } = user._doc;
+      res.status(200).json({ valid: true, user: rest });
+    });
+  } catch (error) {
+    next(error);
+  }
+};

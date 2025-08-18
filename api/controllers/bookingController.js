@@ -289,6 +289,11 @@ export const getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
     
+    // Ensure users can only access their own bookings
+    if (req.user.id !== userId) {
+      return res.status(403).json({ message: 'Access denied. You can only view your own bookings.' });
+    }
+    
     const bookings = await Booking.find({ userId })
       .populate('movieId', 'name imageUrl')
       .populate('userId', 'username email')

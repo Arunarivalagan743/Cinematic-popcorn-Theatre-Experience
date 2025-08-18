@@ -3,7 +3,7 @@ import Amaran from "../images/amaran.jpg";
 import Brother from "../images/brother.jpg";
 import NewMovie from "../images/new.jpg";
 import Mission from "../images/mission.jpg";
-import CiniPop from "../images/cinipop.webp"; // Generic cinema poster
+// Generic cinema poster
 
 // Image mapping for movies
 export const imageMap = {
@@ -11,7 +11,7 @@ export const imageMap = {
   'brother.jpg': Brother,
   'new.jpg': NewMovie,
   'mission.jpg': Mission,
-  'cinipop.webp': CiniPop,
+
 };
 
 // Helper function to get movie image

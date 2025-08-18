@@ -17,7 +17,7 @@ router.post('/bookings', verifyToken, createBooking);
 router.get('/bookings', verifyToken, getBookings);
 
 // Get bookings for a specific user
-router.get('/user/:userId', verifyToken, getUserBookings);
+router.get('/bookings/user/:userId', verifyToken, getUserBookings);
 
 // Get booking by ID
 router.get('/bookings/:id', verifyToken, getBookingById);

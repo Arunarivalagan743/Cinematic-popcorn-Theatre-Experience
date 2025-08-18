@@ -81,8 +81,9 @@ export default function Profile() {
     setBookingError(null);
     
     try {
+      // Use the correct booking endpoint
       const response = await axios.get(
-        `${backendUrl}/api/user/${currentUser._id}`,
+        `${backendUrl}/api/bookings/user/${currentUser._id}`,
         { 
           withCredentials: true,
           headers: {
@@ -97,13 +98,36 @@ export default function Profile() {
       console.error("Error fetching bookings:", error);
       
       // More detailed error handling
-      if (error.response?.status === 401) {
-        console.log('Authentication failed - user may need to log in again');
-        setBookingError('Your session has expired. Please log in again.');
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.log('Authentication failed - attempting token refresh');
         
-        // Optionally redirect to login or sign out user
-        // dispatch(signOut());
-        // navigate('/signin');
+        try {
+          // Try to refresh the token
+          const refreshResponse = await axios.post(`${backendUrl}/api/auth/refresh-token`, {
+            userId: currentUser._id
+          }, { withCredentials: true });
+          
+          if (refreshResponse.data) {
+            console.log('Token refreshed successfully, retrying booking fetch');
+            // Retry the booking fetch with refreshed token
+            const retryResponse = await axios.get(
+              `${backendUrl}/api/bookings/user/${currentUser._id}`,
+              { 
+                withCredentials: true,
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            console.log('Bookings fetched successfully after token refresh:', retryResponse.data);
+            setBookings(retryResponse.data);
+            return;
+          }
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+        }
+        
+        setBookingError('Your session has expired. Please log in again.');
       } else {
         setBookingError(error.response?.data?.message || error.message || 'Failed to fetch bookings');
       }
@@ -383,7 +407,7 @@ export default function Profile() {
                     >
                       Try Again
                     </button>
-                    {bookingError.includes('session has expired') && (
+                    {(bookingError.includes('session has expired') || bookingError.includes('expired') || bookingError.includes('Authentication failed')) && (
                       <button 
                         onClick={() => {
                           dispatch(signOut());
