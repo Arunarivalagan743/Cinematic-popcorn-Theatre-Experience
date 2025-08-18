@@ -5,6 +5,12 @@ import Showtime from '../models/showtime.model.js';
 
 // Map database categories to frontend categories
 const mapCategory = (dbCategory) => {
+  // If the category is already in the standard format, return as-is
+  if (['STANDARD', 'PREMIUM', 'VIP'].includes(dbCategory)) {
+    return dbCategory;
+  }
+  
+  // Legacy mapping for older category names
   const categoryMap = {
     'Silver': 'STANDARD',
     'Gold': 'PREMIUM', 

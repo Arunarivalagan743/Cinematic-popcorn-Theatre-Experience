@@ -28,10 +28,6 @@ const userSchema = new mongoose.Schema(
         message: 'Please enter a valid phone number'
       }
     },
-    phoneVerified: {
-      type: Boolean,
-      default: false
-    },
     profilePicture: {
       type: String,
       default:

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { useSelector, useDispatch } from 'react-redux';
-import { updateUserSuccess } from '../redux/user/userSlice';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -18,9 +17,7 @@ import {
   faClock,
   faUsers,
   faLock,
-  faLockOpen,
-  faShield,
-  faKey
+  faLockOpen
 } from '@fortawesome/free-solid-svg-icons';
 import { 
   connectSocket, 
@@ -32,13 +29,6 @@ import {
   holdParkingSlot,
   releaseParkingSlot
 } from '../services/socketService';
-import { auth } from '../firebase';
-import { 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber, 
-  PhoneAuthProvider, 
-  signInWithCredential 
-} from 'firebase/auth';
 
 // Import the shared movie image utility
 import { getMovieImage } from '../utils/movieImages';
@@ -46,7 +36,6 @@ import { getMovieImage } from '../utils/movieImages';
 const Tickets = () => {
   const { movieId, showtimeId } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
   
   // Reference for selected seats to use in effects
@@ -73,23 +62,18 @@ const Tickets = () => {
   const [phone, setPhone] = useState("");
   const [vehicleNumbers, setVehicleNumbers] = useState({ twoWheeler: [], fourWheeler: [] });
   
-  // OTP verification states
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState(null);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
-  const [isOtpLoading, setIsOtpLoading] = useState(false);
-  
-  // Test mode for development (set to false for production)
-  const TEST_MODE = import.meta.env.MODE === 'development';
-  
-  // Constants - All seats are now ₹150
+  // Constants - Different prices for different categories
   const SEAT_PRICE = {
-    STANDARD: 150,
-    PREMIUM: 150,
-    VIP: 150
+    STANDARD: 150,  // Updated to match database price
+    Standard: 150,
+    Gold: 150,
+    Silver: 150,
+    PREMIUM: 180,
+    Premium: 180,
+    Platinum: 180,
+    VIP: 250,
+    Diamond: 250,
+    Balcony: 250
   };
   const TWO_WHEELER_PRICE = 50;
   const FOUR_WHEELER_PRICE = 100;
@@ -171,9 +155,10 @@ const Tickets = () => {
   
   // Calculate total cost based on selected seats and parking
   useEffect(() => {
-    // Calculate seat cost
+    // Calculate seat cost with different prices for different categories
     const seatCost = Array.isArray(selectedSeats) ? selectedSeats.reduce((acc, seat) => {
-      return acc + (SEAT_PRICE[seat.category] || SEAT_PRICE.STANDARD);
+      const price = SEAT_PRICE[seat.category] || SEAT_PRICE.STANDARD;
+      return acc + price;
     }, 0) : 0;
     
     // Add parking cost
@@ -263,12 +248,21 @@ const Tickets = () => {
       });
       setMovieData(movieRes.data);
       
-      // Fetch seats for this showtime
-      const seatsRes = await axios.get(`${backendUrl}/api/seats/showtime/${showtimeId}`, {
-        withCredentials: true
+      // Fetch seats for this showtime with aggressive cache busting
+      const timestamp = Date.now();
+      const randomParam = Math.random().toString(36).substring(7);
+      const seatsRes = await axios.get(`${backendUrl}/api/seats/showtime/${showtimeId}?_t=${timestamp}&_r=${randomParam}&nocache=true`, {
+        withCredentials: true,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'If-Modified-Since': 'Mon, 26 Jul 1997 05:00:00 GMT'
+        }
       });
-      console.log('Seats fetched from API:', seatsRes.data);
-      console.log('Number of seats:', seatsRes.data.length);
+      console.log('🎯 Fresh seats fetched from API:', seatsRes.data);
+      console.log('🔢 Number of seats:', seatsRes.data.length);
+      console.log('📊 Sample seat data:', seatsRes.data.slice(0, 3));
       setSeats(seatsRes.data);
       
       // Fetch parking slots for this showtime
@@ -316,417 +310,6 @@ const Tickets = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Setup reCAPTCHA verifier
-  useEffect(() => {
-    const setupRecaptcha = () => {
-      try {
-        if (!recaptchaVerifier) {
-          // Wait for the container to exist in DOM
-          const container = document.getElementById('recaptcha-container');
-          if (!container) {
-            console.warn('reCAPTCHA container not ready yet, retrying...');
-            // Retry after a short delay
-            setTimeout(setupRecaptcha, 500);
-            return;
-          }
-          
-          const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible',
-            callback: () => {
-              console.log('reCAPTCHA solved');
-            },
-            'expired-callback': () => {
-              console.log('reCAPTCHA expired');
-            }
-          });
-          setRecaptchaVerifier(verifier);
-          console.log('reCAPTCHA verifier created successfully');
-        }
-      } catch (error) {
-        console.error('Error setting up reCAPTCHA:', error);
-        // Don't show error popup for reCAPTCHA setup issues in development
-        if (process.env.NODE_ENV === 'production') {
-          Swal.fire({
-            title: 'Verification Setup Error',
-            text: 'Failed to initialize phone verification. Please refresh the page.',
-            icon: 'error',
-            confirmButtonColor: '#C8A951'
-          });
-        }
-      }
-    };
-
-    // Delay setup to ensure DOM is ready
-    setTimeout(setupRecaptcha, 1500);
-
-    // Cleanup
-    return () => {
-      if (recaptchaVerifier) {
-        try {
-          recaptchaVerifier.clear();
-        } catch (error) {
-          console.error('Error clearing reCAPTCHA:', error);
-        }
-      }
-    };
-  }, []);
-
-  // Send OTP to phone number with email fallback
-  const sendOTP = async () => {
-    if (!phone || phone.trim() === '') {
-      Swal.fire({
-        title: 'Phone Number Required',
-        text: 'Please enter your phone number first.',
-        icon: 'warning',
-        confirmButtonColor: '#C8A951'
-      });
-      return;
-    }
-
-    // Format phone number for Firebase (add country code if not present)
-    let formattedPhone = phone.trim();
-    if (!formattedPhone.startsWith('+')) {
-      formattedPhone = '+91' + formattedPhone; // Default to India
-    }
-
-    // Basic phone number validation
-    const phoneRegex = /^\+\d{10,15}$/;
-    if (!phoneRegex.test(formattedPhone)) {
-      Swal.fire({
-        title: 'Invalid Phone Number',
-        text: 'Please enter a valid phone number (10 digits).',
-        icon: 'error',
-        confirmButtonColor: '#C8A951'
-      });
-      return;
-    }
-
-    setIsOtpLoading(true);
-
-    try {
-      // Test mode for development
-      if (TEST_MODE) {
-        console.log('TEST MODE: Simulating OTP send');
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-        setIsOtpSent(true);
-        setConfirmationResult({ testMode: true, phone: formattedPhone });
-        
-        Swal.fire({
-          title: 'OTP Sent! (Test Mode)',
-          text: `Test OTP: 123456 (for ${formattedPhone})`,
-          icon: 'success',
-          confirmButtonColor: '#C8A951'
-        });
-        return;
-      }
-
-      // Production mode with real Firebase - try phone first
-      let otpSentViaPhone = false;
-      
-      try {
-        // Ensure reCAPTCHA is ready
-        if (!recaptchaVerifier) {
-          console.log('reCAPTCHA not found, creating new one...');
-          const container = document.getElementById('recaptcha-container');
-          if (!container) {
-            throw new Error('reCAPTCHA container not found');
-          }
-          
-          const newVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible',
-            callback: () => {
-              console.log('reCAPTCHA solved');
-            }
-          });
-          setRecaptchaVerifier(newVerifier);
-          
-          // Wait a moment for the verifier to be ready
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const result = await signInWithPhoneNumber(auth, formattedPhone, newVerifier);
-          setConfirmationResult(result);
-          otpSentViaPhone = true;
-        } else {
-          const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
-          setConfirmationResult(result);
-          otpSentViaPhone = true;
-        }
-      } catch (firebaseError) {
-        console.error('Firebase OTP failed:', firebaseError);
-        
-        // Check if it's a billing error or other Firebase issues
-        if (firebaseError.code === 'auth/billing-not-enabled' || 
-            firebaseError.code === 'auth/quota-exceeded' ||
-            firebaseError.message?.includes('billing')) {
-          console.log('Firebase billing issue detected, falling back to email OTP...');
-          
-          // Fallback to email-based OTP
-          try {
-            const backendUrl = 
-              process.env.NODE_ENV === 'production' 
-                ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
-                : 'http://localhost:5000';
-            
-            const emailOtpResponse = await axios.post(`${backendUrl}/api/auth/send-email-otp`, {
-              phone: formattedPhone,
-              email: currentUser?.email || 'fallback@example.com'
-            }, {
-              withCredentials: true
-            });
-            
-            if (emailOtpResponse.data.success) {
-              setConfirmationResult({ 
-                emailMode: true, 
-                phone: formattedPhone,
-                otpId: emailOtpResponse.data.otpId 
-              });
-              otpSentViaPhone = false; // Using email fallback
-              
-              Swal.fire({
-                title: 'OTP Sent via Email!',
-                html: `
-                  <p>Phone verification is temporarily unavailable.</p>
-                  <p>We've sent a verification code to your registered email address:</p>
-                  <p><strong>${currentUser?.email || 'your email'}</strong></p>
-                  <p>Please check your inbox and enter the code below.</p>
-                `,
-                icon: 'info',
-                confirmButtonColor: '#C8A951'
-              });
-            } else {
-              throw new Error('Email OTP service failed');
-            }
-          } catch (emailError) {
-            console.error('Email OTP fallback failed:', emailError);
-            throw firebaseError; // Throw original Firebase error
-          }
-        } else {
-          throw firebaseError; // Re-throw other Firebase errors
-        }
-      }
-      
-      setIsOtpSent(true);
-      
-      if (otpSentViaPhone) {
-        Swal.fire({
-          title: 'OTP Sent!',
-          text: `Verification code has been sent to ${formattedPhone}`,
-          icon: 'success',
-          confirmButtonColor: '#C8A951'
-        });
-      }
-      
-    } catch (error) {
-      console.error('Error sending OTP:', error);
-      let errorMessage = 'Failed to send OTP. Please try again.';
-      
-      if (error.code === 'auth/invalid-phone-number') {
-        errorMessage = 'Invalid phone number format.';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many requests. Please try again later.';
-      } else if (error.code === 'auth/argument-error') {
-        errorMessage = 'Phone verification setup error. Please refresh the page.';
-      } else if (error.code === 'auth/billing-not-enabled') {
-        errorMessage = 'Phone verification is temporarily unavailable. Please contact support.';
-      }
-      
-      Swal.fire({
-        title: 'OTP Send Failed',
-        text: errorMessage,
-        icon: 'error',
-        confirmButtonColor: '#C8A951'
-      });
-      
-      // Reset verification state
-      setIsOtpSent(false);
-      setConfirmationResult(null);
-    } finally {
-      setIsOtpLoading(false);
-    }
-  };
-
-  // Verify OTP (supports both Firebase and email OTP)
-  const verifyOTP = async () => {
-    if (!otp || otp.trim() === '') {
-      Swal.fire({
-        title: 'OTP Required',
-        text: 'Please enter the verification code.',
-        icon: 'warning',
-        confirmButtonColor: '#C8A951'
-      });
-      return;
-    }
-
-    if (!confirmationResult) {
-      Swal.fire({
-        title: 'Error',
-        text: 'Please request a new OTP.',
-        icon: 'error',
-        confirmButtonColor: '#C8A951'
-      });
-      return;
-    }
-
-    setIsOtpVerifying(true);
-
-    try {
-      // Test mode verification
-      if (TEST_MODE && confirmationResult.testMode) {
-        console.log('TEST MODE: Simulating OTP verification');
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate verification delay
-        
-        if (otp === '123456') {
-          setIsPhoneVerified(true);
-          
-          // Sync phone verification with user profile if user is logged in
-          if (currentUser) {
-            try {
-              const response = await axios.post(
-                `${backendUrl}/api/user/verify-phone/${currentUser._id}`,
-                {
-                  phone: phone,
-                  phoneVerified: true
-                },
-                { withCredentials: true }
-              );
-              
-              // Update Redux store with the new user data
-              dispatch(updateUserSuccess(response.data));
-              
-              console.log('Phone verification synced with profile (test mode):', response.data);
-            } catch (error) {
-              console.error('Error syncing phone verification with profile (test mode):', error);
-            }
-          }
-          
-          Swal.fire({
-            title: 'Phone Verified! (Test Mode)',
-            text: 'Your phone number has been successfully verified.',
-            icon: 'success',
-            confirmButtonColor: '#C8A951'
-          });
-        } else {
-          throw new Error('Invalid test OTP');
-        }
-        return;
-      }
-
-      // Check if using email-based OTP fallback
-      if (confirmationResult.emailMode) {
-        console.log('Verifying email-based OTP...');
-        
-        const backendUrl = 
-          process.env.NODE_ENV === 'production' 
-            ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
-            : 'http://localhost:5000';
-        
-        const verifyResponse = await axios.post(`${backendUrl}/api/auth/verify-email-otp`, {
-          otpId: confirmationResult.otpId,
-          otp: otp.trim(),
-          phone: confirmationResult.phone
-        }, {
-          withCredentials: true
-        });
-        
-        if (verifyResponse.data.success) {
-          setIsPhoneVerified(true);
-          
-          // Sync phone verification with user profile if user is logged in
-          if (currentUser) {
-            try {
-              const response = await axios.post(
-                `${backendUrl}/api/user/verify-phone/${currentUser._id}`,
-                {
-                  phone: phone,
-                  phoneVerified: true
-                },
-                { withCredentials: true }
-              );
-              
-              // Update Redux store with the new user data
-              dispatch(updateUserSuccess(response.data));
-              
-              console.log('Phone verification synced with profile (email mode):', response.data);
-            } catch (error) {
-              console.error('Error syncing phone verification with profile (email mode):', error);
-            }
-          }
-          
-          Swal.fire({
-            title: 'Phone Verified!',
-            text: 'Your phone number has been successfully verified via email.',
-            icon: 'success',
-            confirmButtonColor: '#C8A951'
-          });
-        } else {
-          throw new Error('Invalid email OTP');
-        }
-        return;
-      }
-
-      // Production mode verification with Firebase
-      await confirmationResult.confirm(otp);
-      setIsPhoneVerified(true);
-      
-      // Sync phone verification with user profile if user is logged in
-      if (currentUser) {
-        try {
-          const response = await axios.post(
-            `${backendUrl}/api/user/verify-phone/${currentUser._id}`,
-            {
-              phone: phone,
-              phoneVerified: true
-            },
-            { withCredentials: true }
-          );
-          
-          // Update Redux store with the new user data
-          dispatch(updateUserSuccess(response.data));
-          
-          console.log('Phone verification synced with profile:', response.data);
-        } catch (error) {
-          console.error('Error syncing phone verification with profile:', error);
-          // Continue anyway, as the local verification was successful
-        }
-      }
-      
-      Swal.fire({
-        title: 'Phone Verified!',
-        text: 'Your phone number has been successfully verified.',
-        icon: 'success',
-        confirmButtonColor: '#C8A951'
-      });
-    } catch (error) {
-      console.error('Error verifying OTP:', error);
-      let errorMessage = 'Invalid verification code. Please try again.';
-      
-      if (error.code === 'auth/invalid-verification-code') {
-        errorMessage = 'Invalid verification code.';
-      } else if (error.code === 'auth/code-expired') {
-        errorMessage = 'Verification code has expired. Please request a new one.';
-      } else if (error.message === 'Invalid test OTP') {
-        errorMessage = 'Invalid test OTP. Use 123456 for testing.';
-      }
-      
-      Swal.fire({
-        title: 'Verification Failed',
-        text: errorMessage,
-        icon: 'error',
-        confirmButtonColor: '#C8A951'
-      });
-    } finally {
-      setIsOtpVerifying(false);
-    }
-  };
-
-  // Resend OTP
-  const resendOTP = async () => {
-    setOtp('');
-    setIsOtpSent(false);
-    setConfirmationResult(null);
-    await sendOTP();
   };
 
   // Handle seat selection
@@ -815,19 +398,20 @@ const Tickets = () => {
       if (!phone || phone.trim() === '') {
         Swal.fire({
           title: 'Phone Number Required',
-          text: 'Phone number is required for booking verification. Please enter your phone number.',
+          text: 'Phone number is required for booking. Please enter your phone number.',
           icon: 'warning',
           confirmButtonColor: '#C8A951'
         });
         return;
       }
 
-      // Phone verification is required for any booking
-      if (!isPhoneVerified) {
+      // Basic phone number validation
+      const phoneRegex = /^[+]?[\d\s\-\(\)]{10,15}$/;
+      if (!phoneRegex.test(phone.trim())) {
         Swal.fire({
-          title: 'Phone Verification Required',
-          text: 'Please verify your phone number with OTP before proceeding to payment.',
-          icon: 'warning',
+          title: 'Invalid Phone Number',
+          text: 'Please enter a valid phone number (10-15 digits).',
+          icon: 'error',
           confirmButtonColor: '#C8A951'
         });
         return;
@@ -942,21 +526,114 @@ const Tickets = () => {
     }
   };
 
+  // Helper function to render individual seats
+  const renderSeat = (seat) => {
+    // Determine seat status class
+    let seatClass = '';
+    let categoryStyle = '';
+    
+    // Base category styling - different background colors for each category
+    const categoryLower = (seat.category || '').toLowerCase();
+    
+    if (categoryLower.includes('premium') || categoryLower.includes('platinum')) {
+      categoryStyle = 'bg-gradient-to-br from-blue-600 to-blue-700 border-2 border-blue-400';
+    } else if (categoryLower.includes('vip') || categoryLower.includes('diamond') || categoryLower.includes('balcony')) {
+      categoryStyle = 'bg-gradient-to-br from-purple-600 to-purple-700 border-2 border-purple-400';
+    } else {
+      // Standard seats (including STANDARD, Standard, Gold, Silver, or any other category)
+      categoryStyle = 'bg-gradient-to-br from-gray-600 to-gray-700 border border-gray-400';
+    }
+    
+    // Override with status colors
+    if (Array.isArray(selectedSeats) && selectedSeats.some(s => s._id === seat._id)) {
+      seatClass = 'bg-gradient-to-br from-[#C8A951] to-[#DFBD69] border-2 border-[#F4D03F] shadow-lg shadow-[#C8A951]/50'; // selected
+    } else if (seat.status === 'HELD') {
+      seatClass = 'bg-gradient-to-br from-yellow-500 to-yellow-600 border-2 border-yellow-300 cursor-not-allowed'; // held
+    } else if (seat.status === 'SOLD') {
+      seatClass = 'bg-gradient-to-br from-red-500 to-red-600 border-2 border-red-300 cursor-not-allowed'; // sold
+    } else {
+      seatClass = categoryStyle + ' hover:brightness-110 hover:scale-105'; // available with category style
+    }
+    
+    return (
+      <div 
+        key={seat._id}
+        onClick={() => handleSeatSelection(seat)}
+        className={`${seatClass} w-10 h-10 flex items-center justify-center 
+                  text-white text-xs font-bold rounded-lg cursor-pointer transition-all duration-200
+                  hover:shadow-lg relative`}
+        title={`${seat.seatNumber} - ${seat.category} (₹${SEAT_PRICE[seat.category] || SEAT_PRICE.STANDARD})`}
+      >
+        {seat.parsedNumber}
+        
+        {/* Category indicator icon */}
+        <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full text-[8px] flex items-center justify-center font-bold">
+          {/* Premium category indicator */}
+          {(categoryLower.includes('premium') || categoryLower.includes('platinum')) && 
+            <div className="w-2 h-2 bg-blue-300 rounded-full"></div>}
+          
+          {/* VIP category indicator */}
+          {(categoryLower.includes('vip') || categoryLower.includes('diamond') || categoryLower.includes('balcony')) && 
+            <div className="w-2 h-2 bg-purple-300 rounded-full"></div>}
+          
+          {/* Standard category indicator (default for all others) */}
+          {!(categoryLower.includes('premium') || categoryLower.includes('platinum') || 
+             categoryLower.includes('vip') || categoryLower.includes('diamond') || categoryLower.includes('balcony')) && 
+            <div className="w-2 h-2 bg-gray-300 rounded-full"></div>}
+        </div>
+      </div>
+    );
+  };
+
   // Group seats by row for display
   const seatsByRow = Array.isArray(seats) && seats.length > 0 ? seats.reduce((acc, seat) => {
-    const row = seat?.row || '';
+    // Parse row from seatNumber (e.g., "A1" -> row "A", number "1")
+    const seatNumber = seat.seatNumber || '';
+    const rowMatch = seatNumber.match(/^([A-Z]+)/);
+    const row = rowMatch ? rowMatch[1] : 'Unknown';
+    
     if (!acc[row]) acc[row] = [];
-    acc[row].push(seat);
+    acc[row].push({
+      ...seat,
+      parsedRow: row,
+      parsedNumber: seatNumber.replace(/^[A-Z]+/, '') || '0'
+    });
     return acc;
   }, {}) : {};
 
   // Debug seat grouping
   console.log('Total seats:', seats.length);
-  console.log('Seats by row:', seatsByRow);
   console.log('Row keys:', Object.keys(seatsByRow));
-  Object.keys(seatsByRow).forEach(row => {
-    console.log(`Row ${row}: ${seatsByRow[row].length} seats`);
-  });
+  
+  // Debug seat categories (can be removed in production)
+  if (seats.length > 0) {
+    const uniqueCategories = [...new Set(seats.map(seat => seat.category))];
+    console.log('Unique seat categories found:', uniqueCategories);
+    
+    // Show detailed breakdown by category
+    const categoryBreakdown = {};
+    seats.forEach(seat => {
+      const category = seat.category || 'undefined';
+      if (!categoryBreakdown[category]) {
+        categoryBreakdown[category] = [];
+      }
+      categoryBreakdown[category].push(seat.seatNumber);
+    });
+    
+    console.log('Category breakdown:', categoryBreakdown);
+    console.log('Current showtime ID:', showtimeId);
+    console.log('Sample seats from each row:');
+    ['A', 'F', 'K'].forEach(row => {
+      const rowSeats = seats.filter(seat => seat.seatNumber?.startsWith(row));
+      if (rowSeats.length > 0) {
+        console.log(`Row ${row} sample:`, rowSeats.slice(0, 2).map(s => ({ 
+          seatNumber: s.seatNumber, 
+          category: s.category, 
+          price: s.price 
+        })));
+      }
+    });
+  }
 
   // Loading state
   if (loading) {
@@ -1069,29 +746,6 @@ const Tickets = () => {
                   </div>
                 </div>
                 
-                {/* Status indicators */}
-                <div className="flex flex-wrap gap-4 mb-6">
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-[#3A3A3A] rounded-sm mr-2"></div>
-                    <span className="text-[#F5F5F5] text-sm">Available</span>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-[#C8A951] rounded-sm mr-2"></div>
-                    <span className="text-[#F5F5F5] text-sm">Selected</span>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-yellow-500 rounded-sm mr-2"></div>
-                    <span className="text-[#F5F5F5] text-sm">Held</span>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-red-500 rounded-sm mr-2"></div>
-                    <span className="text-[#F5F5F5] text-sm">Sold</span>
-                  </div>
-                </div>
-                
                 {/* Socket connection status */}
                 <div className="flex items-center mt-4">
                   <div className={`w-3 h-3 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -1106,9 +760,35 @@ const Tickets = () => {
         
         {/* Seat selection */}
         <div className="bg-[#1A1A1A] p-6 rounded-lg shadow-lg mb-8 border border-[#C8A951]/20">
-          <h2 className="text-2xl font-semibold text-[#F5F5F5] mb-6">
-            Select Your Seats
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold text-[#F5F5F5]">
+              Select Your Seats
+            </h2>
+            
+            <button
+              onClick={() => {
+                console.log('🔄 Force refreshing seat data with cache bypass...');
+                
+                // Clear any potential cache
+                if (typeof localStorage !== 'undefined') {
+                  localStorage.removeItem(`seats_${showtimeId}`);
+                }
+                if (typeof sessionStorage !== 'undefined') {
+                  sessionStorage.removeItem(`seats_${showtimeId}`);
+                }
+                
+                // Reset state first
+                setSeats([]);
+                setLoading(true);
+                
+                // Force refresh with timestamp
+                fetchData();
+              }}
+              className="px-4 py-2 bg-[#C8A951] hover:bg-[#DFBD69] text-[#0D0D0D] font-semibold rounded-md transition-all duration-300 text-sm"
+            >
+              🔄 Force Refresh Seats
+            </button>
+          </div>
           
           <div className="w-full flex justify-center mb-8">
             <div className="w-full max-w-3xl">
@@ -1116,58 +796,94 @@ const Tickets = () => {
                 SCREEN
               </div>
               
-              {/* Seats arrangement */}
-              <div className="space-y-4">
-                {Object.keys(seatsByRow).sort().map(row => (
-                  <div key={row} className="flex justify-center">
-                    <div className="w-8 flex items-center justify-center text-gray-300 font-semibold">
-                      {row}
+              {/* Seats arrangement with cinema-style layout */}
+              <div className="space-y-3">
+                {Object.keys(seatsByRow).sort().map(row => {
+                  const rowSeats = seatsByRow[row].sort((a, b) => parseInt(a.parsedNumber) - parseInt(b.parsedNumber));
+                  
+                  // Split seats into left, center, and right sections for aisle effect
+                  const totalSeats = rowSeats.length;
+                  const leftSectionEnd = Math.floor(totalSeats * 0.25);
+                  const rightSectionStart = Math.floor(totalSeats * 0.75);
+                  
+                  const leftSeats = rowSeats.slice(0, leftSectionEnd);
+                  const centerSeats = rowSeats.slice(leftSectionEnd, rightSectionStart);
+                  const rightSeats = rowSeats.slice(rightSectionStart);
+
+                  return (
+                    <div key={row} className="flex justify-center items-center">
+                      {/* Row Label */}
+                      <div className="w-8 flex items-center justify-center text-[#C8A951] font-bold text-lg">
+                        {row}
+                      </div>
+                      
+                      {/* Left Section */}
+                      <div className="flex gap-1">
+                        {leftSeats.map(seat => renderSeat(seat))}
+                      </div>
+                      
+                      {/* Left Aisle */}
+                      <div className="w-8"></div>
+                      
+                      {/* Center Section */}
+                      <div className="flex gap-1">
+                        {centerSeats.map(seat => renderSeat(seat))}
+                      </div>
+                      
+                      {/* Right Aisle */}
+                      <div className="w-8"></div>
+                      
+                      {/* Right Section */}
+                      <div className="flex gap-1">
+                        {rightSeats.map(seat => renderSeat(seat))}
+                      </div>
                     </div>
-                    
-                    <div className="flex gap-2 flex-wrap justify-center">
-                      {seatsByRow[row].sort((a, b) => a.number - b.number).map(seat => {
-                        // Determine seat status class
-                        let seatClass = 'bg-[#3A3A3A] hover:bg-[#4A4A4A]'; // available
-                        
-                        if (Array.isArray(selectedSeats) && selectedSeats.some(s => s._id === seat._id)) {
-                          seatClass = 'bg-[#C8A951] hover:bg-[#DFBD69]'; // selected by current user
-                        } else if (seat.status === 'HELD') {
-                          seatClass = 'bg-yellow-500 cursor-not-allowed'; // held by someone
-                        } else if (seat.status === 'SOLD') {
-                          seatClass = 'bg-red-500 cursor-not-allowed'; // sold
-                        }
-                        
-                        return (
-                          <div 
-                            key={seat._id}
-                            onClick={() => handleSeatSelection(seat)}
-                            className={`${seatClass} w-10 h-10 flex items-center justify-center 
-                                      text-[#F5F5F5] text-sm rounded-sm cursor-pointer transition-all
-                                      ${seat.category === 'PREMIUM' ? 'border-2 border-[#C8A951]' : ''}
-                                      ${seat.category === 'VIP' ? 'border-2 border-[#DFBD69]' : ''}`}
-                          >
-                            {seat.number}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               
-              {/* Seat categories */}
-              <div className="flex justify-center mt-6 space-x-4">
+              {/* Seat categories with different prices and visual styles */}
+              <div className="flex justify-center mt-8 space-x-8 flex-wrap gap-y-4">
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-[#3A3A3A] mr-2"></div>
-                  <span className="text-[#F5F5F5] text-sm">Standard (₹{SEAT_PRICE.STANDARD})</span>
+                  <div className="w-6 h-6 bg-gradient-to-br from-gray-600 to-gray-700 border border-gray-400 mr-3 rounded-lg relative">
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-gray-300 rounded-full"></div>
+                  </div>
+                  <span className="text-[#F5F5F5] text-sm font-medium">Standard (₹{SEAT_PRICE.STANDARD})</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-[#3A3A3A] border-2 border-[#C8A951] mr-2"></div>
-                  <span className="text-[#F5F5F5] text-sm">Premium (₹{SEAT_PRICE.PREMIUM})</span>
+                  <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 border-2 border-blue-400 mr-3 rounded-lg relative">
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-300 rounded-full"></div>
+                  </div>
+                  <span className="text-[#F5F5F5] text-sm font-medium">Premium (₹{SEAT_PRICE.PREMIUM})</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-[#3A3A3A] border-2 border-[#DFBD69] mr-2"></div>
-                  <span className="text-[#F5F5F5] text-sm">VIP (₹{SEAT_PRICE.VIP})</span>
+                  <div className="w-6 h-6 bg-gradient-to-br from-purple-600 to-purple-700 border-2 border-purple-400 mr-3 rounded-lg relative">
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-300 rounded-full"></div>
+                  </div>
+                  <span className="text-[#F5F5F5] text-sm font-medium">VIP (₹{SEAT_PRICE.VIP})</span>
+                </div>
+              </div>
+              
+              {/* Status indicators */}
+              <div className="flex justify-center mt-6 space-x-6 flex-wrap gap-y-2">
+                <div className="flex items-center">
+                  <div className="w-5 h-5 bg-gradient-to-br from-gray-600 to-gray-700 border border-gray-400 rounded-lg mr-2"></div>
+                  <span className="text-[#F5F5F5] text-xs">Available</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="w-5 h-5 bg-gradient-to-br from-[#C8A951] to-[#DFBD69] border-2 border-[#F4D03F] rounded-lg mr-2"></div>
+                  <span className="text-[#F5F5F5] text-xs">Selected</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="w-5 h-5 bg-gradient-to-br from-yellow-500 to-yellow-600 border-2 border-yellow-300 rounded-lg mr-2"></div>
+                  <span className="text-[#F5F5F5] text-xs">Held</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 border-2 border-red-300 rounded-lg mr-2"></div>
+                  <span className="text-[#F5F5F5] text-xs">Sold</span>
                 </div>
               </div>
             </div>
@@ -1362,130 +1078,11 @@ const Tickets = () => {
                         : 'bg-[#1A1A1A] border border-gray-600 text-[#F5F5F5] focus:border-[#C8A951] focus:ring-1 focus:ring-[#C8A951]/20'
                     } focus:outline-none`}
                     required={selectedSeats.length > 0 || selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0}
-                    disabled={isPhoneVerified}
                   />
-                  {!isPhoneVerified && (selectedSeats.length > 0 || selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0) && (
-                    <button
-                      onClick={sendOTP}
-                      disabled={isOtpLoading || !phone || phone.trim() === ''}
-                      className="px-4 py-2 bg-[#C8A951] hover:bg-[#DFBD69] text-[#0D0D0D] font-semibold rounded-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                      {isOtpLoading ? (
-                        <>
-                          <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <FontAwesomeIcon icon={faKey} className="mr-2" />
-                          {isOtpSent ? 'Resend OTP' : 'Send OTP'}
-                        </>
-                      )}
-                    </button>
-                  )}
                 </div>
-                
-                {/* Phone verification status */}
-                {isPhoneVerified && (
-                  <div className="flex items-center mt-2 text-green-400">
-                    <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
-                    <span className="text-sm">Phone number verified</span>
-                  </div>
-                )}
               </div>
-              
-              {/* OTP Input */}
-              {isOtpSent && !isPhoneVerified && (
-                <div>
-                  <label className="block mb-1 text-[#C8A951] font-semibold">
-                    Verification Code <span className="text-red-400">*</span>
-                    <span className="text-sm text-yellow-400 block">Enter the 6-digit code sent to your phone</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Enter 6-digit code"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      className="flex-1 px-4 py-2 rounded-md bg-[#1A1A1A] border-2 border-[#C8A951] text-[#F5F5F5] focus:border-[#DFBD69] focus:ring-2 focus:ring-[#C8A951]/20 focus:outline-none"
-                      maxLength="6"
-                    />
-                    <button
-                      onClick={verifyOTP}
-                      disabled={isOtpVerifying || !otp || otp.trim() === ''}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                      {isOtpVerifying ? (
-                        <>
-                          <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />
-                          Verifying...
-                        </>
-                      ) : (
-                        <>
-                          <FontAwesomeIcon icon={faShield} className="mr-2" />
-                          Verify
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  
-                  <div className="mt-2 text-center">
-                    <button
-                      onClick={resendOTP}
-                      className="text-[#C8A951] hover:text-[#DFBD69] text-sm underline"
-                    >
-                      Didn't receive the code? Resend OTP
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
-            
-            {/* Verification Status Card */}
-            {(selectedSeats.length > 0 || selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0) && (
-              <div className="bg-[#0D0D0D] p-4 rounded-lg border border-[#C8A951]/30">
-                <h3 className="text-lg font-semibold text-[#F5F5F5] mb-3 flex items-center">
-                  <FontAwesomeIcon icon={faShield} className="mr-2 text-[#C8A951]" />
-                  Verification Status
-                </h3>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#F5F5F5] text-sm">Phone Number:</span>
-                    <span className={`text-sm ${phone ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {phone ? 'Entered' : 'Required'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#F5F5F5] text-sm">OTP Sent:</span>
-                    <span className={`text-sm ${isOtpSent ? 'text-green-400' : 'text-gray-400'}`}>
-                      {isOtpSent ? 'Yes' : 'Pending'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#F5F5F5] text-sm">Phone Verified:</span>
-                    <span className={`text-sm ${isPhoneVerified ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {isPhoneVerified ? 'Verified' : 'Required'}
-                    </span>
-                  </div>
-                </div>
-                
-                {!isPhoneVerified && (selectedSeats.length > 0 || selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0) && (
-                  <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded">
-                    <p className="text-yellow-400 text-xs">
-                      <FontAwesomeIcon icon={faExclamationCircle} className="mr-1" />
-                      Phone verification is required to proceed with payment
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-          
-          {/* Hidden reCAPTCHA container */}
-          <div id="recaptcha-container"></div>
         </div>
         
         {/* Summary and checkout */}
@@ -1499,7 +1096,10 @@ const Tickets = () => {
               <span className="text-[#F5F5F5]/80">Selected Seats:</span>
               <span className="text-[#F5F5F5] font-medium">
                 {!Array.isArray(selectedSeats) || selectedSeats.length === 0 ? 'None' : 
-                 selectedSeats.map(seat => `${seat.row}${seat.number}`).join(', ')}
+                 selectedSeats.map(seat => {
+                   console.log('Seat object:', seat); // Debug log
+                   return seat.seatNumber || 'Unknown';
+                 }).join(', ')}
               </span>
             </div>
             
@@ -1507,10 +1107,26 @@ const Tickets = () => {
               <span className="text-[#F5F5F5]/80">Seats Cost:</span>
               <span className="text-[#F5F5F5] font-medium">
                 ₹{Array.isArray(selectedSeats) ? selectedSeats.reduce((acc, seat) => {
-                  return acc + (SEAT_PRICE[seat.category] || SEAT_PRICE.STANDARD);
+                  const price = SEAT_PRICE[seat.category] || SEAT_PRICE.STANDARD;
+                  return acc + price;
                 }, 0) : 0}
               </span>
             </div>
+            
+            {/* Show individual seat breakdown if seats are selected */}
+            {Array.isArray(selectedSeats) && selectedSeats.length > 0 && (
+              <div className="text-xs text-[#F5F5F5]/60 mt-1 mb-2">
+                {selectedSeats.map(seat => {
+                  const price = SEAT_PRICE[seat.category] || SEAT_PRICE.STANDARD;
+                  return (
+                    <div key={seat._id} className="flex justify-between">
+                      <span>{seat.seatNumber} ({seat.category}):</span>
+                      <span>₹{price}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             
             {parkingNeeded && (
               <>
@@ -1543,16 +1159,13 @@ const Tickets = () => {
               onClick={handleProceedToPayment}
               disabled={
                 !Array.isArray(selectedSeats) || 
-                selectedSeats.length === 0 || 
-                ((selectedSeats.length > 0 || selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0) && !isPhoneVerified)
+                selectedSeats.length === 0
               }
               className="px-6 py-3 bg-[#C8A951] hover:bg-[#DFBD69] text-[#0D0D0D] font-semibold rounded-md transition-all duration-300
                        disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[#3A3A3A] disabled:text-[#F5F5F5]/50"
             >
               <FontAwesomeIcon icon={faDollarSign} className="mr-2" />
-              {((selectedSeats.length > 0 || selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0) && !isPhoneVerified) 
-                ? 'Verify Phone to Continue' 
-                : 'Proceed to Payment'}
+              Proceed to Payment
             </button>
           </div>
         </div>

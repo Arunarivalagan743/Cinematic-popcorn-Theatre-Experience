@@ -290,32 +290,7 @@ export default function Profile() {
                     defaultValue={currentUser?.phone}
                     onChange={handleChange}
                   />
-                  {currentUser?.phoneVerified && (
-                    <FaCheckCircle className="text-green-500 ml-2" title="Phone Verified" />
-                  )}
-                  {currentUser?.phone && !currentUser?.phoneVerified && (
-                    <FaTimesCircle className="text-red-500 ml-2" title="Phone Not Verified" />
-                  )}
                 </div>
-                
-                {/* Phone Verification Status */}
-                {currentUser?.phone && !currentUser?.phoneVerified && (
-                  <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-3 mb-4">
-                    <p className="text-yellow-400 text-sm mb-2">
-                      <FaExclamationCircle className="inline mr-2" />
-                      Your phone number is not verified. Verify it during booking or update it here to verify.
-                    </p>
-                  </div>
-                )}
-                
-                {currentUser?.phoneVerified && (
-                  <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3 mb-4">
-                    <p className="text-green-400 text-sm">
-                      <FaCheckCircle className="inline mr-2" />
-                      Your phone number is verified and ready for bookings!
-                    </p>
-                  </div>
-                )}
                 
                 <div className="flex items-center border-b border-[#C8A951]/30 focus-within:border-[#C8A951] transition duration-300 pb-1">
                   <FaLock className="text-[#C8A951] mr-3" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
@@ -477,9 +452,6 @@ export default function Profile() {
                                 <FaPhone className="mr-2 text-[#C8A951]" />
                                 <span className="font-medium text-[#F5F5F5] mr-2">Contact:</span>
                                 <span className="text-[#C8A951]">{booking.phone}</span>
-                                {booking.phoneVerified && (
-                                  <FaCheckCircle className="ml-2 text-green-500" title="Phone Verified" />
-                                )}
                               </p>
                             )}
                           </div>

@@ -24,6 +24,51 @@ const Home = () => {
 
   const { currentUser } = useSelector((state) => state.user);
 
+  // Function to check if a showtime is still bookable
+  const isShowtimeBookable = (showtime) => {
+    if (!showtime || !showtime.startTime) return false;
+    
+    const currentTime = new Date();
+    const showtimeStart = new Date(showtime.startTime);
+    const cutoffMinutes = showtime.cutoffMinutes || 30; // Default 30 minutes cutoff
+    const cutoffTime = new Date(showtimeStart.getTime() - (cutoffMinutes * 60000));
+    
+    // Check if showtime has already started
+    if (currentTime > showtimeStart) {
+      return false;
+    }
+    
+    // Check if cutoff time has passed
+    if (currentTime > cutoffTime) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Function to get time remaining until cutoff
+  const getTimeUntilCutoff = (showtime) => {
+    if (!showtime || !showtime.startTime) return null;
+    
+    const currentTime = new Date();
+    const showtimeStart = new Date(showtime.startTime);
+    const cutoffMinutes = showtime.cutoffMinutes || 30;
+    const cutoffTime = new Date(showtimeStart.getTime() - (cutoffMinutes * 60000));
+    
+    const timeDiff = cutoffTime - currentTime;
+    
+    if (timeDiff <= 0) return null;
+    
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
+  };
+
   const fetchMovies = async () => {
     setLoading(true);
     try {
@@ -207,19 +252,53 @@ const Home = () => {
 </div>
 
             <div className="px-5 pb-5 text-center flex flex-col gap-3">
-              {/* Primary: Real-time booking button */}
+              {/* Primary: Real-time booking button with cutoff validation */}
               {movie.showtimes && movie.showtimes.length > 0 && movie.showtimes[0] && 
                 (typeof movie.showtimes[0] === 'object' ? movie.showtimes[0]._id : movie.showtimes[0]) ? (
-                <Link to={`/tickets/${movie._id}/${typeof movie.showtimes[0] === 'object' ? 
-                  movie.showtimes[0]._id : movie.showtimes[0]}`}>
-                  <button
-                    className="bg-[#0D0D0D] border-2 border-[#C8A951] text-[#F5F5F5] font-playfair font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg w-full flex items-center justify-center"
-                    style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
-                  >
-                    <span className="mr-2">Book Now</span>
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  </button>
-                </Link>
+                (() => {
+                  const showtime = typeof movie.showtimes[0] === 'object' ? movie.showtimes[0] : null;
+                  const isBookable = showtime ? isShowtimeBookable(showtime) : true; // Fallback to true for legacy data
+                  const timeRemaining = showtime ? getTimeUntilCutoff(showtime) : null;
+                  
+                  if (!isBookable) {
+                    return (
+                      <div className="space-y-2">
+                        <button
+                          className="bg-gray-600 border-2 border-gray-500 text-gray-300 font-playfair font-semibold py-3 px-6 cursor-not-allowed w-full flex items-center justify-center"
+                          disabled
+                        >
+                          <span className="mr-2">Booking Closed</span>
+                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                        </button>
+                        <p className="text-red-400 text-sm font-poppins">
+                          {new Date() > new Date(showtime.startTime) 
+                            ? 'Show has started' 
+                            : 'Booking cutoff time passed'}
+                        </p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="space-y-2">
+                      <Link to={`/tickets/${movie._id}/${typeof movie.showtimes[0] === 'object' ? 
+                        movie.showtimes[0]._id : movie.showtimes[0]}`}>
+                        <button
+                          className="bg-[#0D0D0D] border-2 border-[#C8A951] text-[#F5F5F5] font-playfair font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg w-full flex items-center justify-center"
+                          style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
+                        >
+                          <span className="mr-2">Book Now</span>
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        </button>
+                      </Link>
+                      {timeRemaining && (
+                        <p className="text-yellow-400 text-xs font-poppins">
+                          ⏰ Booking closes in {timeRemaining}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()
               ) : (
                 /* Fallback: Legacy booking button when showtimes aren't available */
                 <div className="flex flex-col gap-3">

@@ -55,38 +55,3 @@ export const deleteUser = async (req, res, next) => {
     next(error);
   }
 };
-
-// verify phone number
-export const verifyPhone = async (req, res, next) => {
-  if (req.user.id !== req.params.id) {
-    return next(errorHandler(401, 'You can only verify your own phone number!'));
-  }
-  
-  try {
-    const { phone, phoneVerified } = req.body;
-    
-    if (!phone) {
-      return next(errorHandler(400, 'Phone number is required'));
-    }
-    
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          phone,
-          phoneVerified: phoneVerified || true
-        },
-      },
-      { new: true }
-    );
-    
-    if (!updatedUser) {
-      return next(errorHandler(404, 'User not found'));
-    }
-    
-    const { password, ...rest } = updatedUser._doc;
-    res.status(200).json(rest);
-  } catch (error) {
-    next(error);
-  }
-};
