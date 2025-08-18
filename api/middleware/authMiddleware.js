@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 // Middleware to verify JWT token
-const verifyToken = (req, res, next) => {
+export const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -15,5 +15,5 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// Use the middleware on routes that require authentication
-app.use('/api/booking', verifyToken);
+// Default export for compatibility
+export default { verifyToken };

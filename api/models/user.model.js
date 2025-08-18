@@ -16,6 +16,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    phone: {
+      type: String,
+      required: false,
+      unique: false,
+      validate: {
+        validator: function(v) {
+          // Optional phone validation - only validate if provided
+          return !v || /^[+]?[\d\s\-\(\)]{10,15}$/.test(v);
+        },
+        message: 'Please enter a valid phone number'
+      }
+    },
+    phoneVerified: {
+      type: Boolean,
+      default: false
+    },
     profilePicture: {
       type: String,
       default:

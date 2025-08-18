@@ -1,24 +1,53 @@
 import mongoose from 'mongoose';
 
 const bookingSchema = new mongoose.Schema({
-  movie: { type: String, required: true },
-  screen: { type: String, required: true },
-  timing: { type: String, required: true },
-  seats: { type: [String], required: true },
-  totalCost: { type: Number, required: true },
-  parkingDetails: {
-    phone: { type: String, required: false },
-    vehicleNumbers: {
-      twoWheeler: [String],
-      fourWheeler: [String],
-    },
-    selectedSlot: {
-      twoWheeler: [String],
-      fourWheeler: [String],
-    },
-    parkingCost: { type: Number, required: false },
+  movieId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Movie', 
+    required: true 
   },
-  currentUser: { type: String, required: false },  // Store the email associated with the user
+  showtimeId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    required: true 
+  },
+  userId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: true 
+  },
+  seats: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Seat' 
+  }],
+  parkingSlots: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'ParkingSlot' 
+  }],
+  totalCost: { 
+    type: Number, 
+    required: true 
+  },
+  paymentStatus: { 
+    type: String, 
+    enum: ['PENDING', 'COMPLETED', 'FAILED'], 
+    default: 'PENDING' 
+  },
+  paymentId: { 
+    type: String, 
+    default: null 
+  },
+  phone: { 
+    type: String, 
+    required: false 
+  },
+  bookingReference: {
+    type: String,
+    default: function() {
+      // Generate unique booking reference using current timestamp and random number
+      return Math.random().toString(36).substring(2, 8).toUpperCase() + 
+             Date.now().toString(36).substring(4);
+    }
+  }
 }, { timestamps: true });
 
 const Booking = mongoose.model('Booking', bookingSchema);

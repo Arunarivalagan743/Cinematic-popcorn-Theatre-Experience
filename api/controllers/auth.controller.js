@@ -81,3 +81,32 @@ export const google = async (req, res, next) => {
 export const signout = (req, res) => {
   res.clearCookie('access_token').status(200).json('Signout success!');
 };
+
+export const refreshToken = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return next(errorHandler(400, 'User ID is required'));
+    }
+    
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return next(errorHandler(404, 'User not found'));
+    }
+    
+    // Generate new token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    
+    const { password: hashedPassword, ...rest } = user._doc;
+    
+    res
+      .cookie('access_token', token, { httpOnly: true, expires: expiryDate })
+      .status(200)
+      .json(rest);
+  } catch (error) {
+    next(error);
+  }
+};

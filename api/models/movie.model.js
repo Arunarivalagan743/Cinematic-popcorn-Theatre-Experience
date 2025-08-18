@@ -17,14 +17,6 @@ const movieSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  screen: {
-    type: String,
-    required: true,
-  },
-  timing: {
-    type: String,
-    required: true,
-  },
   summary: {
     type: String,
     required: true,
@@ -36,11 +28,29 @@ const movieSchema = new mongoose.Schema({
   ratings: {
     type: Number,
     required: true,
-  }, votes: {
+  }, 
+  votes: {
     type: String,
     default: 0, // Initialize likes to 0
   },
-});
+  duration: {
+    type: Number,
+    required: true,
+    default: 120 // Duration in minutes
+  },
+  screen: {
+    type: String,
+    required: false
+  },
+  timing: {
+    type: String,
+    required: false
+  },
+  showtimes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Showtime'
+  }]
+}, { timestamps: true });
 
 const Movie = mongoose.model('Movie', movieSchema);
 

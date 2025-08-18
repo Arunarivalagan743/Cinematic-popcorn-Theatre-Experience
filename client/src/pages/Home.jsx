@@ -2,9 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import Amaran from "../images/amaran.jpg";
-import Brother from "../images/brother.jpg";
-import NewMovie from "../images/new.jpg";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTheaterMasks, faStar, faThumbsUp, faFilm, faTv, faLanguage, faClock } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../components/Footer';
@@ -13,6 +10,9 @@ import { useSelector } from 'react-redux';
 import withReactContent from 'sweetalert2-react-content';
 
 import { FaFilm, FaUser, FaNewspaper, FaTag } from 'react-icons/fa'; // You can import any React icon
+
+// Import the shared movie image utility
+import { imageMap } from '../utils/movieImages';
 
 const MySwal = withReactContent(Swal);
 
@@ -24,19 +24,19 @@ const Home = () => {
 
   const { currentUser } = useSelector((state) => state.user);
 
-  const imageMap = {
-    'amaran.jpg': Amaran,
-    'brother.jpg': Brother,
-    'new.jpg': NewMovie,
-  };
-
   const fetchMovies = async () => {
     setLoading(true);
     try {
-const response = await axios.get('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/movies', {
-  withCredentials: true, // ✅ Add this
-});
+      const backendUrl = 
+        process.env.NODE_ENV === 'production' 
+          ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
+          : 'http://localhost:5000';
+          
+      const response = await axios.get(`${backendUrl}/api/movies`, {
+        withCredentials: true,
+      });
 
+      // The response now includes movies with their showtimes
       setMovies(response.data);
       setError(null);
     } catch (err) {
@@ -206,15 +206,36 @@ const response = await axios.get('https://cinematic-popcorn-theatre-experience-2
   </p>
 </div>
 
-            <div className="px-5 pb-5 text-center">
-              <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>
-                <button
-                  className="bg-[#0D0D0D] border border-[#C8A951] text-[#F5F5F5] font-playfair font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg"
-                  style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.2)'}}
-                >
-                  Book Now
-                </button>
-              </Link>
+            <div className="px-5 pb-5 text-center flex flex-col gap-3">
+              {/* Primary: Real-time booking button */}
+              {movie.showtimes && movie.showtimes.length > 0 && movie.showtimes[0] && 
+                (typeof movie.showtimes[0] === 'object' ? movie.showtimes[0]._id : movie.showtimes[0]) ? (
+                <Link to={`/tickets/${movie._id}/${typeof movie.showtimes[0] === 'object' ? 
+                  movie.showtimes[0]._id : movie.showtimes[0]}`}>
+                  <button
+                    className="bg-[#0D0D0D] border-2 border-[#C8A951] text-[#F5F5F5] font-playfair font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg w-full flex items-center justify-center"
+                    style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
+                  >
+                    <span className="mr-2">Book Now</span>
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  </button>
+                </Link>
+              ) : (
+                /* Fallback: Legacy booking button when showtimes aren't available */
+                <div className="flex flex-col gap-3">
+                  <p className="text-yellow-500 text-sm font-poppins">
+                    Real-time booking not available for this movie
+                  </p>
+                  <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>
+                    <button
+                      className="bg-[#0D0D0D] border border-[#C8A951]/50 text-[#F5F5F5] font-playfair font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg w-full"
+                      style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.1)'}}
+                    >
+                      Book Now (Legacy)
+                    </button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         ))}
