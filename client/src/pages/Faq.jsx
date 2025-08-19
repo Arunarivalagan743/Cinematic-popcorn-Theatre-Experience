@@ -52,7 +52,12 @@ const FAQ = () => {
     e.preventDefault();
     
     try {
-      const response = await axios.post('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/faq/ask', {
+      const backendUrl = 
+        process.env.NODE_ENV === 'production' 
+          ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
+          : 'http://localhost:5000';
+
+      const response = await axios.post(`${backendUrl}/api/faq/ask`, {
         userQuestion: questionData.userQuestion,
         userEmail: questionData.userEmail,
       },{
@@ -61,9 +66,25 @@ const FAQ = () => {
   
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: response.data.message,
+        title: 'Question Submitted! 📧',
+        html: `
+          <div style="text-align: left; font-size: 14px;">
+            <p><strong>✅ Your question has been successfully submitted!</strong></p>
+            <p>📧 <strong>Check your email</strong> for a confirmation message.</p>
+            <p>🔔 Our team has been notified and will review your question.</p>
+            <p>💡 If it's a common question, we may add it to our FAQ section to help others!</p>
+          </div>
+        `,
+        background: '#0D0D0D',
+        color: '#F5F5F5',
+        confirmButtonColor: '#C8A951',
+        confirmButtonText: 'Got it!',
+        timer: 5000,
+        timerProgressBar: true
       });
+
+      // Clear the form
+      setQuestionData({ userQuestion: '', userEmail: '' });
     } catch (error) {
       Swal.fire({
         icon: 'error',
@@ -77,17 +98,40 @@ const FAQ = () => {
     e.preventDefault();
   
     try {
-      const response = await axios.post('/api/contact/submit', {
+      const backendUrl = 
+        process.env.NODE_ENV === 'production' 
+          ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
+          : 'http://localhost:5000';
+
+      const response = await axios.post(`${backendUrl}/api/contact/submit`, {
         name: formData.name,
         email: formData.email,
         message: formData.message,
+      }, {
+        withCredentials: true
       });
   
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: response.data.message,
+        title: 'Message Sent! 📧',
+        html: `
+          <div style="text-align: left; font-size: 14px;">
+            <p><strong>✅ Your message has been sent successfully!</strong></p>
+            <p>📧 <strong>Check your email</strong> for a confirmation message.</p>
+            <p>🔔 Our team has been notified and will get back to you soon.</p>
+            <p>⏰ We typically respond within 24 hours!</p>
+          </div>
+        `,
+        background: '#0D0D0D',
+        color: '#F5F5F5',
+        confirmButtonColor: '#C8A951',
+        confirmButtonText: 'Great!',
+        timer: 5000,
+        timerProgressBar: true
       });
+
+      // Clear the form
+      setFormData({ name: '', email: '', message: '' });
     } catch (error) {
       Swal.fire({
         icon: 'error',

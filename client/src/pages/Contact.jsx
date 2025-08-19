@@ -19,15 +19,32 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post('/api/contact/submit', formData);
+      const backendUrl = 
+        process.env.NODE_ENV === 'production' 
+          ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
+          : 'http://localhost:5000';
+
+      const response = await axios.post(`${backendUrl}/api/contact/submit`, formData, {
+        withCredentials: true
+      });
       
       Swal.fire({
         icon: 'success',
-        title: 'Message Sent!',
-        text: 'Thank you for your message. We\'ll get back to you soon!',
+        title: 'Message Sent! 📧',
+        html: `
+          <div style="text-align: left; font-size: 14px;">
+            <p><strong>✅ Your message has been sent successfully!</strong></p>
+            <p>📧 <strong>Check your email</strong> for a confirmation message.</p>
+            <p>🔔 Our team has been notified and will get back to you soon.</p>
+            <p>⏰ We typically respond within 24 hours!</p>
+          </div>
+        `,
         background: '#0D0D0D',
         color: '#F5F5F5',
         confirmButtonColor: '#C8A951',
+        confirmButtonText: 'Great!',
+        timer: 5000,
+        timerProgressBar: true
       });
       
       setFormData({ name: '', email: '', message: '' });
