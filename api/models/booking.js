@@ -19,7 +19,15 @@ const bookingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Seat' 
   }],
+  seatIds: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Seat' 
+  }],
   parkingSlots: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'ParkingSlot' 
+  }],
+  parkingSlotIds: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'ParkingSlot' 
   }],
@@ -29,12 +37,25 @@ const bookingSchema = new mongoose.Schema({
   },
   paymentStatus: { 
     type: String, 
-    enum: ['PENDING', 'COMPLETED', 'FAILED'], 
+    enum: ['PENDING', 'COMPLETED', 'FAILED', 'pending', 'completed', 'failed'], 
     default: 'PENDING' 
   },
   paymentId: { 
     type: String, 
     default: null 
+  },
+  orderId: {
+    type: String,
+    default: null
+  },
+  paymentSignature: {
+    type: String,
+    default: null
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['razorpay', 'stripe', 'cash', 'demo'],
+    default: 'demo'
   },
   phone: { 
     type: String, 

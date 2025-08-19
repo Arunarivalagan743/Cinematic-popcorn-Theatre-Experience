@@ -5,12 +5,51 @@ import jwt from 'jsonwebtoken';
 
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
-  const hashedPassword = bcryptjs.hashSync(password, 10);
-  const newUser = new User({ username, email, password: hashedPassword });
+  
+  // Input validation
+  if (!username || !email || !password) {
+    return next(errorHandler(400, 'Username, email, and password are required'));
+  }
+  
+  if (password.length < 6) {
+    return next(errorHandler(400, 'Password must be at least 6 characters long'));
+  }
+  
   try {
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { username }] 
+    });
+    
+    if (existingUser) {
+      if (existingUser.email === email) {
+        return next(errorHandler(400, 'Email already exists'));
+      }
+      if (existingUser.username === username) {
+        return next(errorHandler(400, 'Username already exists'));
+      }
+    }
+    
+    const hashedPassword = bcryptjs.hashSync(password, 10);
+    const newUser = new User({ username, email, password: hashedPassword });
+    
     await newUser.save();
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
+    console.error('Signup error:', error);
+    
+    // Handle MongoDB duplicate key errors
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyPattern)[0];
+      return next(errorHandler(400, `${duplicateField} already exists`));
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return next(errorHandler(400, messages.join(', ')));
+    }
+    
     next(error);
   }
 };

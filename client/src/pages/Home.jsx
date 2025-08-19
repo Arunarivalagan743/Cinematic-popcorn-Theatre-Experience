@@ -26,12 +26,35 @@ const Home = () => {
 
   // Function to check if a showtime is still bookable
   const isShowtimeBookable = (showtime) => {
-    if (!showtime || !showtime.startTime) return false;
+    if (!showtime || !showtime.startTime || !showtime.date) return false;
     
     const currentTime = new Date();
-    const showtimeStart = new Date(showtime.startTime);
-    const cutoffMinutes = showtime.cutoffMinutes || 30; // Default 30 minutes cutoff
+    
+    // Combine date and startTime properly
+    const showtimeDate = new Date(showtime.date);
+    const showtimeStartTime = new Date(showtime.startTime);
+    
+    // Create the actual showtime datetime by combining date and time
+    const showtimeStart = new Date(
+      showtimeDate.getFullYear(),
+      showtimeDate.getMonth(),
+      showtimeDate.getDate(),
+      showtimeStartTime.getHours(),
+      showtimeStartTime.getMinutes(),
+      showtimeStartTime.getSeconds()
+    );
+    
+    const cutoffMinutes = showtime.cutoffMinutes || 5; // Default 5 minutes cutoff (reduced from 15)
     const cutoffTime = new Date(showtimeStart.getTime() - (cutoffMinutes * 60000));
+    
+    // Debug logging
+    console.log('Showtime check:', {
+      currentTime: currentTime.toLocaleString(),
+      showtimeStart: showtimeStart.toLocaleString(),
+      cutoffTime: cutoffTime.toLocaleString(),
+      isAfterCutoff: currentTime > cutoffTime,
+      isAfterStart: currentTime > showtimeStart
+    });
     
     // Check if showtime has already started
     if (currentTime > showtimeStart) {
@@ -48,11 +71,25 @@ const Home = () => {
 
   // Function to get time remaining until cutoff
   const getTimeUntilCutoff = (showtime) => {
-    if (!showtime || !showtime.startTime) return null;
+    if (!showtime || !showtime.startTime || !showtime.date) return null;
     
     const currentTime = new Date();
-    const showtimeStart = new Date(showtime.startTime);
-    const cutoffMinutes = showtime.cutoffMinutes || 30;
+    
+    // Combine date and startTime properly
+    const showtimeDate = new Date(showtime.date);
+    const showtimeStartTime = new Date(showtime.startTime);
+    
+    // Create the actual showtime datetime by combining date and time
+    const showtimeStart = new Date(
+      showtimeDate.getFullYear(),
+      showtimeDate.getMonth(),
+      showtimeDate.getDate(),
+      showtimeStartTime.getHours(),
+      showtimeStartTime.getMinutes(),
+      showtimeStartTime.getSeconds()
+    );
+    
+    const cutoffMinutes = showtime.cutoffMinutes || 5;
     const cutoffTime = new Date(showtimeStart.getTime() - (cutoffMinutes * 60000));
     
     const timeDiff = cutoffTime - currentTime;

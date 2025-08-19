@@ -6,7 +6,7 @@ import OAuth from '../components/OAuth';
 
 export default function SignUp() {
   const [formData, setFormData] = useState({});
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -18,7 +18,21 @@ export default function SignUp() {
     e.preventDefault();
     try {
       setLoading(true);
-      setError(false);
+      setError(null);
+      
+      // Basic client-side validation
+      if (!formData.username || !formData.email || !formData.password) {
+        setError('All fields are required');
+        setLoading(false);
+        return;
+      }
+      
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters long');
+        setLoading(false);
+        return;
+      }
+      
     const res = await fetch('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/auth/signup', {
   method: 'POST',
   headers: {
@@ -30,14 +44,18 @@ export default function SignUp() {
 
       const data = await res.json();
       setLoading(false);
-      if (data.success === false) {
-        setError(true);
+      
+      if (data.success === false || !res.ok) {
+        setError(data.message || 'Registration failed');
         return;
       }
+      
+      // Success - redirect to sign in
       navigate('/sign-in');
     } catch (error) {
       setLoading(false);
-      setError(true);
+      setError('Network error. Please try again.');
+      console.error('Signup error:', error);
     }
   };
 
@@ -99,7 +117,7 @@ export default function SignUp() {
       </div>
       {error && (
         <p className="text-[#E50914] mt-4 text-center font-poppins">
-          Something went wrong!
+          {error}
         </p>
       )}
     </div>

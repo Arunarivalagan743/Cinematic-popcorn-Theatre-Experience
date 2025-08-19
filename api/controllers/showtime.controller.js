@@ -208,12 +208,28 @@ export const generateNextDayShowtimes = async () => {
     tomorrow.setHours(0, 0, 0, 0);
     
     const screens = ['Screen 1', 'Screen 2', 'Screen 3'];
-    const showtimes = [
-      { start: '10:00', end: '12:30' },
-      { start: '13:30', end: '16:00' },
-      { start: '16:30', end: '19:00' },
-      { start: '19:30', end: '22:00' }
-    ];
+    
+    // Different show timings for each screen to avoid conflicts
+    const screenShowtimes = {
+      'Screen 1': [
+        { start: '09:30', end: '12:00', cutoff: 5 },   // Early morning show
+        { start: '12:30', end: '15:00', cutoff: 8 },   // Lunch time show
+        { start: '15:30', end: '18:00', cutoff: 10 },  // Afternoon show
+        { start: '18:30', end: '21:00', cutoff: 15 }   // Evening show
+      ],
+      'Screen 2': [
+        { start: '10:00', end: '12:30', cutoff: 5 },   // Morning show
+        { start: '13:00', end: '15:30', cutoff: 8 },   // Early afternoon
+        { start: '16:00', end: '18:30', cutoff: 10 },  // Late afternoon
+        { start: '19:00', end: '21:30', cutoff: 15 }   // Night show
+      ],
+      'Screen 3': [
+        { start: '10:30', end: '13:00', cutoff: 5 },   // Late morning
+        { start: '13:30', end: '16:00', cutoff: 8 },   // Afternoon
+        { start: '16:30', end: '19:00', cutoff: 10 },  // Evening
+        { start: '19:30', end: '22:00', cutoff: 15 }   // Late night
+      ]
+    };
     
     // Track the number of new showtimes created
     let newShowtimesCount = 0;
@@ -223,9 +239,10 @@ export const generateNextDayShowtimes = async () => {
       // Distribute movies across screens
       const screenIndex = movies.indexOf(movie) % screens.length;
       const screen = screens[screenIndex];
+      const showtimesForScreen = screenShowtimes[screen];
       
       // Create showtimes for this movie in the assigned screen
-      for (const time of showtimes) {
+      for (const time of showtimesForScreen) {
         const [startHour, startMinute] = time.start.split(':').map(Number);
         const [endHour, endMinute] = time.end.split(':').map(Number);
         
@@ -249,7 +266,7 @@ export const generateNextDayShowtimes = async () => {
             startTime,
             endTime,
             date: tomorrow,
-            cutoffMinutes: 15
+            cutoffMinutes: time.cutoff
           }).save();
           
           // Create seats for this showtime
@@ -339,6 +356,96 @@ export const generateNextDayShowtimes = async () => {
     return newShowtimesCount;
   } catch (error) {
     console.error('Error generating next day showtimes:', error);
+    throw error;
+  }
+};
+
+// Function to update existing showtimes with new varied timings
+export const updateExistingShowtimes = async () => {
+  try {
+    console.log('Updating existing showtimes with varied timings...');
+    
+    // Get today's showtimes
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const existingShowtimes = await Showtime.find({
+      date: { $gte: today, $lt: tomorrow },
+      isArchived: false
+    }).populate('movieId');
+    
+    // New timing configurations for each screen
+    const screenShowtimes = {
+      'Screen 1': [
+        { start: '09:30', end: '12:00', cutoff: 5 },
+        { start: '12:30', end: '15:00', cutoff: 8 },
+        { start: '15:30', end: '18:00', cutoff: 10 },
+        { start: '18:30', end: '21:00', cutoff: 15 }
+      ],
+      'Screen 2': [
+        { start: '10:00', end: '12:30', cutoff: 5 },
+        { start: '13:00', end: '15:30', cutoff: 8 },
+        { start: '16:00', end: '18:30', cutoff: 10 },
+        { start: '19:00', end: '21:30', cutoff: 15 }
+      ],
+      'Screen 3': [
+        { start: '10:30', end: '13:00', cutoff: 5 },
+        { start: '13:30', end: '16:00', cutoff: 8 },
+        { start: '16:30', end: '19:00', cutoff: 10 },
+        { start: '19:30', end: '22:00', cutoff: 15 }
+      ]
+    };
+    
+    let updatedCount = 0;
+    
+    // Group showtimes by screen
+    const showtimesByScreen = {};
+    existingShowtimes.forEach(showtime => {
+      if (!showtimesByScreen[showtime.screen]) {
+        showtimesByScreen[showtime.screen] = [];
+      }
+      showtimesByScreen[showtime.screen].push(showtime);
+    });
+    
+    // Update each screen's showtimes
+    for (const [screen, showtimes] of Object.entries(showtimesByScreen)) {
+      const newTimings = screenShowtimes[screen] || screenShowtimes['Screen 1']; // fallback
+      
+      // Sort existing showtimes by start time
+      showtimes.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+      
+      // Update each showtime with new timing
+      for (let i = 0; i < showtimes.length && i < newTimings.length; i++) {
+        const showtime = showtimes[i];
+        const newTiming = newTimings[i];
+        
+        const [startHour, startMinute] = newTiming.start.split(':').map(Number);
+        const [endHour, endMinute] = newTiming.end.split(':').map(Number);
+        
+        const newStartTime = new Date(showtime.date);
+        newStartTime.setHours(startHour, startMinute, 0, 0);
+        
+        const newEndTime = new Date(showtime.date);
+        newEndTime.setHours(endHour, endMinute, 0, 0);
+        
+        // Update the showtime
+        await Showtime.findByIdAndUpdate(showtime._id, {
+          startTime: newStartTime,
+          endTime: newEndTime,
+          cutoffMinutes: newTiming.cutoff
+        });
+        
+        updatedCount++;
+        console.log(`Updated ${showtime.movieId.name} in ${screen} to ${newTiming.start}-${newTiming.end}`);
+      }
+    }
+    
+    console.log(`Updated ${updatedCount} existing showtimes with new timings`);
+    return updatedCount;
+  } catch (error) {
+    console.error('Error updating existing showtimes:', error);
     throw error;
   }
 };

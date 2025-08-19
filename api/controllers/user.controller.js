@@ -72,10 +72,29 @@ export const deleteUser = async (req, res, next) => {
   if (req.user.id !== req.params.id) {
     return next(errorHandler(401, 'You can delete only your account!'));
   }
+  
   try {
+    // Check if user exists
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return next(errorHandler(404, 'User not found'));
+    }
+    
+    // Delete user's bookings first (cleanup related data)
+    await Booking.deleteMany({ userId: req.params.id });
+    
+    // Delete the user
     await User.findByIdAndDelete(req.params.id);
-    res.status(200).json('User has been deleted...');
+    
+    // Clear the authentication cookie
+    res.clearCookie('access_token');
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'User account and all related data have been deleted successfully' 
+    });
   } catch (error) {
+    console.error('Delete user error:', error);
     next(error);
   }
 };

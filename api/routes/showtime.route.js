@@ -3,7 +3,8 @@ import {
   createShowtime,
   getAllShowtimes,
   getShowtimesByMovie,
-  getShowtimeById
+  getShowtimeById,
+  updateExistingShowtimes
 } from '../controllers/showtime.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 
@@ -20,5 +21,8 @@ router.get('/:id', getShowtimeById);
 
 // Create a new showtime (admin only)
 router.post('/', verifyToken, createShowtime);
+
+// Update existing showtimes with new varied timings
+router.post('/update-timings', updateExistingShowtimes);
 
 export default router;
