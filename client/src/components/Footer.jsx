@@ -40,21 +40,29 @@ const Footer = () => {
         </div>
 
         {/* Middle Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
           <div className="transition-transform duration-500">
             <h3 className="font-cinzel text-lg font-bold mb-4 text-[#C8A951] border-b border-[#C8A951]/30 pb-2">About Us</h3>
             <ul className="space-y-3 font-poppins">
               <li><a href="/about" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Our Heritage</a></li>
-              <li><a href="/about" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Join Our Team</a></li>
-              <li><a href="/about" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Contact Us</a></li>
+              <li><a href="/contact" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Contact Us</a></li>
+              <li><a href="/pricing" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Pricing</a></li>
             </ul>
           </div>
           <div className="transition-transform duration-500">
             <h3 className="font-cinzel text-lg font-bold mb-4 text-[#C8A951] border-b border-[#C8A951]/30 pb-2">Guest Services</h3>
             <ul className="space-y-3 font-poppins">
               <li><a href="/faq" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">FAQs</a></li>
-              <li><a href="/faq" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Premium Support</a></li>
-              <li><a href="/faq" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Privacy Policy</a></li>
+              <li><a href="/contact" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Premium Support</a></li>
+              <li><a href="/cancellation-refund" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Cancellation/Refund</a></li>
+            </ul>
+          </div>
+          <div className="transition-transform duration-500">
+            <h3 className="font-cinzel text-lg font-bold mb-4 text-[#C8A951] border-b border-[#C8A951]/30 pb-2">Legal</h3>
+            <ul className="space-y-3 font-poppins">
+              <li><a href="/privacy-policy" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Privacy Policy</a></li>
+              <li><a href="/terms-conditions" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Terms & Conditions</a></li>
+              <li><a href="/cancellation-refund" className="hover:text-[#C8A951] transition duration-300 border-l-2 border-transparent hover:border-[#C8A951] pl-2">Refund Policy</a></li>
             </ul>
           </div>
           <div className="transition-transform duration-500">

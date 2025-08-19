@@ -207,148 +207,130 @@ export const generateNextDayShowtimes = async () => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
     
-    const screens = ['Screen 1', 'Screen 2', 'Screen 3'];
-    
-    // Different show timings for each screen to avoid conflicts
-    const screenShowtimes = {
-      'Screen 1': [
-        { start: '09:30', end: '12:00', cutoff: 5 },   // Early morning show
-        { start: '12:30', end: '15:00', cutoff: 8 },   // Lunch time show
-        { start: '15:30', end: '18:00', cutoff: 10 },  // Afternoon show
-        { start: '18:30', end: '21:00', cutoff: 15 }   // Evening show
-      ],
-      'Screen 2': [
-        { start: '10:00', end: '12:30', cutoff: 5 },   // Morning show
-        { start: '13:00', end: '15:30', cutoff: 8 },   // Early afternoon
-        { start: '16:00', end: '18:30', cutoff: 10 },  // Late afternoon
-        { start: '19:00', end: '21:30', cutoff: 15 }   // Night show
-      ],
-      'Screen 3': [
-        { start: '10:30', end: '13:00', cutoff: 5 },   // Late morning
-        { start: '13:30', end: '16:00', cutoff: 8 },   // Afternoon
-        { start: '16:30', end: '19:00', cutoff: 10 },  // Evening
-        { start: '19:30', end: '22:00', cutoff: 15 }   // Late night
-      ]
-    };
+    // Different show timings for each screen - one timing per screen
+    const screenTimings = [
+      { screen: 'Screen 1', start: '09:30', end: '12:00', cutoff: 5 },   // Morning show
+      { screen: 'Screen 2', start: '13:00', end: '15:30', cutoff: 8 },   // Afternoon show  
+      { screen: 'Screen 3', start: '19:30', end: '22:00', cutoff: 15 }   // Night show
+    ];
     
     // Track the number of new showtimes created
     let newShowtimesCount = 0;
     
-    // For each movie, create showtimes in different screens
-    for (const movie of movies) {
-      // Distribute movies across screens
-      const screenIndex = movies.indexOf(movie) % screens.length;
-      const screen = screens[screenIndex];
-      const showtimesForScreen = screenShowtimes[screen];
+    // For each movie, assign to one screen with one specific timing
+    for (let i = 0; i < movies.length; i++) {
+      const movie = movies[i];
       
-      // Create showtimes for this movie in the assigned screen
-      for (const time of showtimesForScreen) {
-        const [startHour, startMinute] = time.start.split(':').map(Number);
-        const [endHour, endMinute] = time.end.split(':').map(Number);
-        
-        const startTime = new Date(tomorrow);
-        startTime.setHours(startHour, startMinute);
-        
-        const endTime = new Date(tomorrow);
-        endTime.setHours(endHour, endMinute);
-        
-        // Check if this showtime already exists
-        const existingShowtime = await Showtime.findOne({
+      // Distribute movies across screens (one movie per screen)
+      const screenIndex = i % screenTimings.length;
+      const assignedTiming = screenTimings[screenIndex];
+      
+      const [startHour, startMinute] = assignedTiming.start.split(':').map(Number);
+      const [endHour, endMinute] = assignedTiming.end.split(':').map(Number);
+      
+      const startTime = new Date(tomorrow);
+      startTime.setHours(startHour, startMinute);
+      
+      const endTime = new Date(tomorrow);
+      endTime.setHours(endHour, endMinute);
+      
+      // Check if this showtime already exists
+      const existingShowtime = await Showtime.findOne({
+        movieId: movie._id,
+        screen: assignedTiming.screen,
+        startTime: { $gte: startTime, $lt: new Date(startTime.getTime() + 60000) } // Within a minute
+      });
+      
+      if (!existingShowtime) {
+        const newShowtime = await new Showtime({
           movieId: movie._id,
-          screen,
-          startTime: { $gte: startTime, $lt: new Date(startTime.getTime() + 60000) } // Within a minute
-        });
+          screen: assignedTiming.screen,
+          startTime,
+          endTime,
+          date: tomorrow,
+          cutoffMinutes: assignedTiming.cutoff
+        }).save();
         
-        if (!existingShowtime) {
-          const newShowtime = await new Showtime({
-            movieId: movie._id,
-            screen,
-            startTime,
-            endTime,
-            date: tomorrow,
-            cutoffMinutes: time.cutoff
-          }).save();
-          
-          // Create seats for this showtime
-          const seatCategories = {
-            Gold: [0, 1, 2, 3, 4, 5],
-            Platinum: [6, 7, 8, 9, 10, 11],
-            Silver: [12, 13, 14, 15, 16, 17],
-            Diamond: [18, 19, 20, 21, 22, 23],
-            Balcony: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
-          };
-          
-          const seatPrices = {
-            Gold: 6,
-            Platinum: 8,
-            Silver: 3,
-            Diamond: 10,
-            Balcony: 5,
-          };
-          
-          const rowLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-          
-          // Bulk insert seats
-          const seats = [];
-          let seatIndex = 0;
-          
-          for (const [category, indices] of Object.entries(seatCategories)) {
-            for (const index of indices) {
-              const row = Math.floor(index / 6);
-              const col = (index % 6) + 1;
-              const seatNumber = `${rowLabels[row]}${col}`;
-              
-              seats.push({
-                movieId: movie._id,
-                showtimeId: newShowtime._id,
-                seatNumber,
-                category,
-                price: seatPrices[category],
-                status: SeatStatus.AVAILABLE
-              });
-              
-              seatIndex++;
-            }
-          }
-          
-          await Seat.insertMany(seats);
-
-          // Create parking slots for this showtime
-          const twoWheelerSlots = Array.from({ length: 40 }, (_, i) => `T${i + 1}`);
-          const fourWheelerSlots = Array.from({ length: 40 }, (_, i) => `F${i + 1}`);
-          const twoWheelerPrice = 20;
-          const fourWheelerPrice = 30;
-          
-          const parkingSlots = [];
-          
-          // Two-wheeler slots
-          for (const slotNumber of twoWheelerSlots) {
-            parkingSlots.push({
+        // Create seats for this showtime
+        const seatCategories = {
+          Gold: [0, 1, 2, 3, 4, 5],
+          Platinum: [6, 7, 8, 9, 10, 11],
+          Silver: [12, 13, 14, 15, 16, 17],
+          Diamond: [18, 19, 20, 21, 22, 23],
+          Balcony: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
+        };
+        
+        const seatPrices = {
+          Gold: 6,
+          Platinum: 8,
+          Silver: 3,
+          Diamond: 10,
+          Balcony: 5,
+        };
+        
+        const rowLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        
+        // Bulk insert seats
+        const seats = [];
+        let seatIndex = 0;
+        
+        for (const [category, indices] of Object.entries(seatCategories)) {
+          for (const index of indices) {
+            const row = Math.floor(index / 6);
+            const col = (index % 6) + 1;
+            const seatNumber = `${rowLabels[row]}${col}`;
+            
+            seats.push({
               movieId: movie._id,
               showtimeId: newShowtime._id,
-              slotNumber,
-              type: 'twoWheeler',
-              price: twoWheelerPrice,
-              status: ParkingStatus.AVAILABLE
+              seatNumber,
+              category,
+              price: seatPrices[category],
+              status: SeatStatus.AVAILABLE
             });
+            
+            seatIndex++;
           }
-          
-          // Four-wheeler slots
-          for (const slotNumber of fourWheelerSlots) {
-            parkingSlots.push({
-              movieId: movie._id,
-              showtimeId: newShowtime._id,
-              slotNumber,
-              type: 'fourWheeler',
-              price: fourWheelerPrice,
-              status: ParkingStatus.AVAILABLE
-            });
-          }
-          
-          await ParkingSlot.insertMany(parkingSlots);
-          
-          newShowtimesCount++;
         }
+        
+        await Seat.insertMany(seats);
+
+        // Create parking slots for this showtime
+        const twoWheelerSlots = Array.from({ length: 40 }, (_, i) => `T${i + 1}`);
+        const fourWheelerSlots = Array.from({ length: 40 }, (_, i) => `F${i + 1}`);
+        const twoWheelerPrice = 20;
+        const fourWheelerPrice = 30;
+        
+        const parkingSlots = [];
+        
+        // Two-wheeler slots
+        for (const slotNumber of twoWheelerSlots) {
+          parkingSlots.push({
+            movieId: movie._id,
+            showtimeId: newShowtime._id,
+            slotNumber,
+            type: 'twoWheeler',
+            price: twoWheelerPrice,
+            status: ParkingStatus.AVAILABLE
+          });
+        }
+        
+        // Four-wheeler slots
+        for (const slotNumber of fourWheelerSlots) {
+          parkingSlots.push({
+            movieId: movie._id,
+            showtimeId: newShowtime._id,
+            slotNumber,
+            type: 'fourWheeler',
+            price: fourWheelerPrice,
+            status: ParkingStatus.AVAILABLE
+          });
+        }
+        
+        await ParkingSlot.insertMany(parkingSlots);
+        
+        newShowtimesCount++;
+        console.log(`Generated showtime for ${movie.name} in ${assignedTiming.screen} at ${assignedTiming.start}-${assignedTiming.end}`);
       }
     }
     
@@ -356,6 +338,151 @@ export const generateNextDayShowtimes = async () => {
     return newShowtimesCount;
   } catch (error) {
     console.error('Error generating next day showtimes:', error);
+    throw error;
+  }
+};
+
+export const generateTodayShowtimes = async () => {
+  try {
+    console.log('Generating today\'s showtimes with future times...');
+    
+    // Get all active movies
+    const movies = await Movie.find();
+    
+    // Calculate today's date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Current time to check what shows are still in the future
+    const currentTime = new Date();
+    
+    // Different show timings for each screen - use future times for today
+    const screenTimings = [
+      { screen: 'Screen 1', start: '14:30', end: '17:00', cutoff: 5 },   // Afternoon show
+      { screen: 'Screen 2', start: '18:00', end: '20:30', cutoff: 8 },   // Evening show  
+      { screen: 'Screen 3', start: '21:00', end: '23:30', cutoff: 15 }   // Night show
+    ];
+    
+    // Delete existing showtimes for today to avoid conflicts
+    await Showtime.deleteMany({
+      date: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+    });
+    console.log('Deleted existing showtimes for today');
+    
+    // Track the number of new showtimes created
+    let newShowtimesCount = 0;
+    
+    // For each movie, assign to one screen with one specific timing
+    for (let i = 0; i < movies.length; i++) {
+      const movie = movies[i];
+      const timing = screenTimings[i % screenTimings.length]; // Cycle through screens
+      
+      const [startHour, startMinute] = timing.start.split(':').map(Number);
+      const [endHour, endMinute] = timing.end.split(':').map(Number);
+      
+      const startTime = new Date(today);
+      startTime.setHours(startHour, startMinute);
+      
+      const endTime = new Date(today);
+      endTime.setHours(endHour, endMinute);
+      
+      // Only create showtime if it's in the future
+      if (startTime > currentTime) {
+        const newShowtime = await new Showtime({
+          movieId: movie._id,
+          screen: timing.screen,
+          startTime,
+          endTime,
+          date: today,
+          cutoffMinutes: timing.cutoff
+        }).save();
+        
+        // Create seats for this showtime
+        const seatCategories = {
+          Gold: [0, 1, 2, 3, 4, 5],
+          Platinum: [6, 7, 8, 9, 10, 11],
+          Silver: [12, 13, 14, 15, 16, 17],
+          Diamond: [18, 19, 20, 21, 22, 23],
+          Balcony: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
+        };
+        
+        const seatPrices = {
+          Gold: 6,
+          Platinum: 8,
+          Silver: 3,
+          Diamond: 10,
+          Balcony: 5,
+        };
+        
+        const rowLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        
+        // Bulk insert seats
+        const seats = [];
+        
+        for (const [category, indices] of Object.entries(seatCategories)) {
+          for (const index of indices) {
+            const row = Math.floor(index / 6);
+            const col = (index % 6) + 1;
+            const seatNumber = `${rowLabels[row]}${col}`;
+            
+            seats.push({
+              movieId: movie._id,
+              showtimeId: newShowtime._id,
+              seatNumber,
+              category,
+              price: seatPrices[category],
+              status: SeatStatus.AVAILABLE
+            });
+          }
+        }
+        
+        await Seat.insertMany(seats);
+
+        // Create parking slots for this showtime
+        const twoWheelerSlots = Array.from({ length: 40 }, (_, i) => `T${i + 1}`);
+        const fourWheelerSlots = Array.from({ length: 40 }, (_, i) => `F${i + 1}`);
+        const twoWheelerPrice = 20;
+        const fourWheelerPrice = 30;
+        
+        const parkingSlots = [];
+        
+        // Two-wheeler slots
+        for (const slotNumber of twoWheelerSlots) {
+          parkingSlots.push({
+            movieId: movie._id,
+            showtimeId: newShowtime._id,
+            slotNumber,
+            type: 'twoWheeler',
+            price: twoWheelerPrice,
+            status: ParkingStatus.AVAILABLE
+          });
+        }
+        
+        // Four-wheeler slots
+        for (const slotNumber of fourWheelerSlots) {
+          parkingSlots.push({
+            movieId: movie._id,
+            showtimeId: newShowtime._id,
+            slotNumber,
+            type: 'fourWheeler',
+            price: fourWheelerPrice,
+            status: ParkingStatus.AVAILABLE
+          });
+        }
+        
+        await ParkingSlot.insertMany(parkingSlots);
+        
+        newShowtimesCount++;
+        console.log(`Created showtime for ${movie.name} in ${timing.screen} at ${timing.start}-${timing.end}`);
+      } else {
+        console.log(`Skipped ${movie.name} showtime at ${timing.start} as it's in the past`);
+      }
+    }
+    
+    console.log(`Generated ${newShowtimesCount} new showtimes for today`);
+    return newShowtimesCount;
+  } catch (error) {
+    console.error('Error generating today\'s showtimes:', error);
     throw error;
   }
 };
@@ -376,73 +503,157 @@ export const updateExistingShowtimes = async () => {
       isArchived: false
     }).populate('movieId');
     
-    // New timing configurations for each screen
-    const screenShowtimes = {
-      'Screen 1': [
-        { start: '09:30', end: '12:00', cutoff: 5 },
-        { start: '12:30', end: '15:00', cutoff: 8 },
-        { start: '15:30', end: '18:00', cutoff: 10 },
-        { start: '18:30', end: '21:00', cutoff: 15 }
-      ],
-      'Screen 2': [
-        { start: '10:00', end: '12:30', cutoff: 5 },
-        { start: '13:00', end: '15:30', cutoff: 8 },
-        { start: '16:00', end: '18:30', cutoff: 10 },
-        { start: '19:00', end: '21:30', cutoff: 15 }
-      ],
-      'Screen 3': [
-        { start: '10:30', end: '13:00', cutoff: 5 },
-        { start: '13:30', end: '16:00', cutoff: 8 },
-        { start: '16:30', end: '19:00', cutoff: 10 },
-        { start: '19:30', end: '22:00', cutoff: 15 }
-      ]
-    };
+    // New timing configurations for each screen - each screen gets one unique time slot
+    const screenTimings = [
+      { screen: 'Screen 1', start: '09:30', end: '12:00', cutoff: 5 },   // Morning show
+      { screen: 'Screen 2', start: '13:00', end: '15:30', cutoff: 8 },   // Afternoon show  
+      { screen: 'Screen 3', start: '19:30', end: '22:00', cutoff: 15 }   // Night show
+    ];
     
     let updatedCount = 0;
     
-    // Group showtimes by screen
-    const showtimesByScreen = {};
+    // Group showtimes by movie to ensure each movie gets one showtime per screen
+    const showtimesByMovie = {};
     existingShowtimes.forEach(showtime => {
-      if (!showtimesByScreen[showtime.screen]) {
-        showtimesByScreen[showtime.screen] = [];
+      const movieId = showtime.movieId._id.toString();
+      if (!showtimesByMovie[movieId]) {
+        showtimesByMovie[movieId] = [];
       }
-      showtimesByScreen[showtime.screen].push(showtime);
+      showtimesByMovie[movieId].push(showtime);
     });
     
-    // Update each screen's showtimes
-    for (const [screen, showtimes] of Object.entries(showtimesByScreen)) {
-      const newTimings = screenShowtimes[screen] || screenShowtimes['Screen 1']; // fallback
+    // Get all movies and assign them to different screens
+    const movies = Object.keys(showtimesByMovie);
+    
+    // Assign each movie to one screen with one specific timing
+    for (let i = 0; i < movies.length; i++) {
+      const movieId = movies[i];
+      const movieShowtimes = showtimesByMovie[movieId];
       
-      // Sort existing showtimes by start time
-      showtimes.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+      // Assign this movie to a screen (distribute movies across screens)
+      const screenIndex = i % screenTimings.length;
+      const assignedTiming = screenTimings[screenIndex];
       
-      // Update each showtime with new timing
-      for (let i = 0; i < showtimes.length && i < newTimings.length; i++) {
-        const showtime = showtimes[i];
-        const newTiming = newTimings[i];
-        
-        const [startHour, startMinute] = newTiming.start.split(':').map(Number);
-        const [endHour, endMinute] = newTiming.end.split(':').map(Number);
-        
-        const newStartTime = new Date(showtime.date);
-        newStartTime.setHours(startHour, startMinute, 0, 0);
-        
-        const newEndTime = new Date(showtime.date);
-        newEndTime.setHours(endHour, endMinute, 0, 0);
-        
-        // Update the showtime
-        await Showtime.findByIdAndUpdate(showtime._id, {
-          startTime: newStartTime,
-          endTime: newEndTime,
-          cutoffMinutes: newTiming.cutoff
-        });
-        
-        updatedCount++;
-        console.log(`Updated ${showtime.movieId.name} in ${screen} to ${newTiming.start}-${newTiming.end}`);
+      // Delete all existing showtimes for this movie
+      await Showtime.deleteMany({ 
+        movieId: movieId,
+        date: { $gte: today, $lt: tomorrow },
+        isArchived: false
+      });
+      
+      // Create one new showtime for this movie in the assigned screen
+      const [startHour, startMinute] = assignedTiming.start.split(':').map(Number);
+      const [endHour, endMinute] = assignedTiming.end.split(':').map(Number);
+      
+      const newStartTime = new Date(today);
+      newStartTime.setHours(startHour, startMinute, 0, 0);
+      
+      const newEndTime = new Date(today);
+      newEndTime.setHours(endHour, endMinute, 0, 0);
+      
+      // Get the first showtime to get movie reference
+      const originalShowtime = movieShowtimes[0];
+      
+      const newShowtime = await new Showtime({
+        movieId: movieId,
+        screen: assignedTiming.screen,
+        startTime: newStartTime,
+        endTime: newEndTime,
+        date: today,
+        cutoffMinutes: assignedTiming.cutoff
+      }).save();
+      
+      // Create seats for this new showtime
+      const seatCategories = {
+        Gold: [0, 1, 2, 3, 4, 5],
+        Platinum: [6, 7, 8, 9, 10, 11],
+        Silver: [12, 13, 14, 15, 16, 17],
+        Diamond: [18, 19, 20, 21, 22, 23],
+        Balcony: [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47],
+      };
+      
+      const seatPrices = {
+        Gold: 6,
+        Platinum: 8,
+        Silver: 3,
+        Diamond: 10,
+        Balcony: 5,
+      };
+      
+      const rowLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+      
+      // Remove existing seats for this movie today
+      await Seat.deleteMany({
+        movieId: movieId,
+        showtimeId: { $in: movieShowtimes.map(st => st._id) }
+      });
+      
+      // Create new seats
+      const seats = [];
+      for (const [category, indices] of Object.entries(seatCategories)) {
+        for (const index of indices) {
+          const row = Math.floor(index / 6);
+          const col = (index % 6) + 1;
+          const seatNumber = `${rowLabels[row]}${col}`;
+          
+          seats.push({
+            movieId: movieId,
+            showtimeId: newShowtime._id,
+            seatNumber,
+            category,
+            price: seatPrices[category],
+            status: SeatStatus.AVAILABLE
+          });
+        }
       }
+      
+      await Seat.insertMany(seats);
+
+      // Create parking slots for this new showtime
+      const twoWheelerSlots = Array.from({ length: 40 }, (_, i) => `T${i + 1}`);
+      const fourWheelerSlots = Array.from({ length: 40 }, (_, i) => `F${i + 1}`);
+      const twoWheelerPrice = 20;
+      const fourWheelerPrice = 30;
+      
+      // Remove existing parking slots for this movie today
+      await ParkingSlot.deleteMany({
+        movieId: movieId,
+        showtimeId: { $in: movieShowtimes.map(st => st._id) }
+      });
+      
+      const parkingSlots = [];
+      
+      // Two-wheeler slots
+      for (const slotNumber of twoWheelerSlots) {
+        parkingSlots.push({
+          movieId: movieId,
+          showtimeId: newShowtime._id,
+          slotNumber,
+          type: 'twoWheeler',
+          price: twoWheelerPrice,
+          status: ParkingStatus.AVAILABLE
+        });
+      }
+      
+      // Four-wheeler slots
+      for (const slotNumber of fourWheelerSlots) {
+        parkingSlots.push({
+          movieId: movieId,
+          showtimeId: newShowtime._id,
+          slotNumber,
+          type: 'fourWheeler',
+          price: fourWheelerPrice,
+          status: ParkingStatus.AVAILABLE
+        });
+      }
+      
+      await ParkingSlot.insertMany(parkingSlots);
+      
+      updatedCount++;
+      console.log(`Updated ${originalShowtime.movieId.name} in ${assignedTiming.screen} to ${assignedTiming.start}-${assignedTiming.end}`);
     }
     
-    console.log(`Updated ${updatedCount} existing showtimes with new timings`);
+    console.log(`Updated ${updatedCount} movies with new distinct showtimes`);
     return updatedCount;
   } catch (error) {
     console.error('Error updating existing showtimes:', error);

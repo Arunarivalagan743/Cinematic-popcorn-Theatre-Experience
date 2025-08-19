@@ -11,6 +11,7 @@ import {
   FaBars,
   FaTimes,
   FaSignInAlt,
+  FaEnvelope,
 } from "react-icons/fa";
 
 export default function Header() {
@@ -56,6 +57,7 @@ export default function Header() {
           {[
             { name: "Home", icon: <FaHome />, path: "/" },
             { name: "About", icon: <FaInfoCircle />, path: "/about" },
+            { name: "Contact", icon: <FaEnvelope />, path: "/contact" },
             { name: "FAQ", icon: <FaQuestionCircle />, path: "/faq" },
           ].map(({ name, icon, path }) => (
             <li
@@ -106,6 +108,7 @@ export default function Header() {
                   {[
                     { name: "Home", icon: <FaHome />, path: "/" },
                     { name: "About", icon: <FaInfoCircle />, path: "/about" },
+                    { name: "Contact", icon: <FaEnvelope />, path: "/contact" },
                     { name: "FAQ", icon: <FaQuestionCircle />, path: "/faq" },
                   ].map(({ name, icon, path }) => (
                     <li

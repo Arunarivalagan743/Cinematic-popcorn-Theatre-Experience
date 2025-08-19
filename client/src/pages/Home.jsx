@@ -26,25 +26,14 @@ const Home = () => {
 
   // Function to check if a showtime is still bookable
   const isShowtimeBookable = (showtime) => {
-    if (!showtime || !showtime.startTime || !showtime.date) return false;
+    if (!showtime || !showtime.startTime) return false;
     
     const currentTime = new Date();
     
-    // Combine date and startTime properly
-    const showtimeDate = new Date(showtime.date);
-    const showtimeStartTime = new Date(showtime.startTime);
+    // startTime is already a complete Date object
+    const showtimeStart = new Date(showtime.startTime);
     
-    // Create the actual showtime datetime by combining date and time
-    const showtimeStart = new Date(
-      showtimeDate.getFullYear(),
-      showtimeDate.getMonth(),
-      showtimeDate.getDate(),
-      showtimeStartTime.getHours(),
-      showtimeStartTime.getMinutes(),
-      showtimeStartTime.getSeconds()
-    );
-    
-    const cutoffMinutes = showtime.cutoffMinutes || 5; // Default 5 minutes cutoff (reduced from 15)
+    const cutoffMinutes = showtime.cutoffMinutes || 5; // Default 5 minutes cutoff
     const cutoffTime = new Date(showtimeStart.getTime() - (cutoffMinutes * 60000));
     
     // Debug logging
@@ -53,16 +42,19 @@ const Home = () => {
       showtimeStart: showtimeStart.toLocaleString(),
       cutoffTime: cutoffTime.toLocaleString(),
       isAfterCutoff: currentTime > cutoffTime,
-      isAfterStart: currentTime > showtimeStart
+      isAfterStart: currentTime > showtimeStart,
+      timeDifferenceMinutes: Math.floor((showtimeStart - currentTime) / (1000 * 60))
     });
     
     // Check if showtime has already started
     if (currentTime > showtimeStart) {
+      console.log('Showtime has already started');
       return false;
     }
     
     // Check if cutoff time has passed
     if (currentTime > cutoffTime) {
+      console.log('Cutoff time has passed');
       return false;
     }
     
@@ -71,23 +63,12 @@ const Home = () => {
 
   // Function to get time remaining until cutoff
   const getTimeUntilCutoff = (showtime) => {
-    if (!showtime || !showtime.startTime || !showtime.date) return null;
+    if (!showtime || !showtime.startTime) return null;
     
     const currentTime = new Date();
     
-    // Combine date and startTime properly
-    const showtimeDate = new Date(showtime.date);
-    const showtimeStartTime = new Date(showtime.startTime);
-    
-    // Create the actual showtime datetime by combining date and time
-    const showtimeStart = new Date(
-      showtimeDate.getFullYear(),
-      showtimeDate.getMonth(),
-      showtimeDate.getDate(),
-      showtimeStartTime.getHours(),
-      showtimeStartTime.getMinutes(),
-      showtimeStartTime.getSeconds()
-    );
+    // startTime is already a complete Date object
+    const showtimeStart = new Date(showtime.startTime);
     
     const cutoffMinutes = showtime.cutoffMinutes || 5;
     const cutoffTime = new Date(showtimeStart.getTime() - (cutoffMinutes * 60000));
@@ -270,23 +251,78 @@ const Home = () => {
             </div>
 
             <div className="p-5 text-[#F5F5F5] text-sm md:text-base space-y-4 font-poppins">
-  <p className="text-xl md:text-2xl font-bold text-[#C8A951] flex items-center gap-3 font-cinzel" style={{textShadow: '0 0 5px rgba(200, 169, 81, 0.2)'}}>
-    <FontAwesomeIcon icon={faFilm} className="text-[#C8A951]" />
-    {movie.name}
-  </p>
-  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-    <FontAwesomeIcon icon={faTv} className="text-[#C8A951]" />
-    Screen: <span className="font-semibold">{movie.screen}</span>
-  </p>
-  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-    <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951]" />
-    Language: <span className="font-semibold">{movie.language}</span>
-  </p>
-  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-    <FontAwesomeIcon icon={faClock} className="text-[#C8A951]" />
-    Timing: <span className="font-semibold">{movie.timing}</span>
-  </p>
-</div>
+              <p className="text-xl md:text-2xl font-bold text-[#C8A951] flex items-center gap-3 font-cinzel" style={{textShadow: '0 0 5px rgba(200, 169, 81, 0.2)'}}>
+                <FontAwesomeIcon icon={faFilm} className="text-[#C8A951]" />
+                {movie.name}
+              </p>
+              
+              {/* Show screen and timing from showtimes if available */}
+              {movie.showtimes && movie.showtimes.length > 0 && movie.showtimes[0] && 
+                typeof movie.showtimes[0] === 'object' ? (
+                <div className="space-y-2">
+                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                    <FontAwesomeIcon icon={faTv} className="text-[#C8A951]" />
+                    Screen: <span className="font-semibold">{movie.showtimes[0].screen}</span>
+                  </p>
+                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                    <FontAwesomeIcon icon={faClock} className="text-[#C8A951]" />
+                    Show Time: <span className="font-semibold">
+                      {new Date(movie.showtimes[0].startTime).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })} - {new Date(movie.showtimes[0].endTime).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </span>
+                  </p>
+                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                    <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951]" />
+                    Language: <span className="font-semibold">{movie.language}</span>
+                  </p>
+                  
+                  {/* Time slot category */}
+                  <div className="flex items-center gap-3">
+                    <FontAwesomeIcon icon={faTheaterMasks} className="text-[#C8A951]" />
+                    <span className="text-base md:text-lg font-medium text-[#F5F5F5]">
+                      Time Slot: 
+                      <span className={`font-semibold ml-1 px-2 py-1 rounded-md text-sm ${
+                        movie.showtimes[0].screen === 'Screen 1' 
+                          ? 'bg-yellow-600/20 text-yellow-300' // Morning
+                          : movie.showtimes[0].screen === 'Screen 2'
+                          ? 'bg-orange-600/20 text-orange-300' // Afternoon
+                          : 'bg-purple-600/20 text-purple-300' // Night
+                      }`}>
+                        {movie.showtimes[0].screen === 'Screen 1' 
+                          ? '🌅 Morning Show' 
+                          : movie.showtimes[0].screen === 'Screen 2'
+                          ? '🌞 Afternoon Show'
+                          : '🌙 Night Show'
+                        }
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                /* Fallback to movie properties if showtimes not available */
+                <div className="space-y-2">
+                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                    <FontAwesomeIcon icon={faTv} className="text-[#C8A951]" />
+                    Screen: <span className="font-semibold">{movie.screen || 'TBA'}</span>
+                  </p>
+                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                    <FontAwesomeIcon icon={faClock} className="text-[#C8A951]" />
+                    Timing: <span className="font-semibold">{movie.timing || 'TBA'}</span>
+                  </p>
+                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                    <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951]" />
+                    Language: <span className="font-semibold">{movie.language}</span>
+                  </p>
+                </div>
+              )}
+            </div>
 
             <div className="px-5 pb-5 text-center flex flex-col gap-3">
               {/* Primary: Real-time booking button with cutoff validation */}

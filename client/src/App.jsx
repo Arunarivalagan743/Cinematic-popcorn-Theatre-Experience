@@ -10,6 +10,11 @@ import PrivateRoute from './components/PrivateRoute';
 
 import TicketsNew from './pages/Tickets-new';
 import Faq from './pages/Faq';
+import Contact from './pages/Contact';
+import Pricing from './pages/Pricing';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsConditions from './pages/TermsConditions';
+import CancellationRefund from './pages/CancellationRefund';
 
 import PaymentNew from './pages/payment-new';
 import { useEffect } from 'react';
@@ -34,6 +39,11 @@ export default function App() {
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/about' element={<About />} />
+          <Route path='/contact' element={<Contact />} />
+          <Route path='/pricing' element={<Pricing />} />
+          <Route path='/privacy-policy' element={<PrivacyPolicy />} />
+          <Route path='/terms-conditions' element={<TermsConditions />} />
+          <Route path='/cancellation-refund' element={<CancellationRefund />} />
           
           {/* New real-time routes (prioritized) */}
           <Route path="/tickets/:movieId/:showtimeId" element={<TicketsNew />} />

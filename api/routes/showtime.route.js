@@ -4,7 +4,8 @@ import {
   getAllShowtimes,
   getShowtimesByMovie,
   getShowtimeById,
-  updateExistingShowtimes
+  updateExistingShowtimes,
+  generateTodayShowtimes
 } from '../controllers/showtime.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 
@@ -24,5 +25,8 @@ router.post('/', verifyToken, createShowtime);
 
 // Update existing showtimes with new varied timings
 router.post('/update-timings', updateExistingShowtimes);
+
+// Generate today's showtimes with future times
+router.post('/generate-today', generateTodayShowtimes);
 
 export default router;
