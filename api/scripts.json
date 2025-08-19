@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "seed-admin": "node utils/createAdmin.js"
+  }
+}

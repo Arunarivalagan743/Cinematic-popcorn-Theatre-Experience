@@ -61,6 +61,11 @@ export const signin = async (req, res, next) => {
     if (!validUser) return next(errorHandler(404, 'User not found'));
     const validPassword = bcryptjs.compareSync(password, validUser.password);
     if (!validPassword) return next(errorHandler(401, 'wrong credentials'));
+    
+    // Update last login
+    validUser.lastLogin = new Date();
+    await validUser.save();
+    
     const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
     const { password: hashedPassword, ...rest } = validUser._doc;
     const expiryDate = new Date(Date.now() + 3600000); // 1 hour
@@ -86,6 +91,10 @@ export const google = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (user) {
+      // Update last login
+      user.lastLogin = new Date();
+      await user.save();
+      
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
       const { password: hashedPassword, ...rest } = user._doc;
       const expiryDate = new Date(Date.now() + 3600000); // 1 hour
@@ -114,6 +123,7 @@ export const google = async (req, res, next) => {
         email: req.body.email,
         password: hashedPassword,
         profilePicture: req.body.photo,
+        lastLogin: new Date()
       });
       await newUser.save();
       const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
@@ -200,5 +210,31 @@ export const validateToken = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const validateSession = async (req, res, next) => {
+  try {
+    const token = req.cookies.access_token || req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({ valid: false, message: 'No session found' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user || !user.isActive) {
+      res.clearCookie('access_token');
+      res.clearCookie('token');
+      return res.status(401).json({ valid: false, message: 'Invalid session' });
+    }
+
+    const { password: hashedPassword, ...rest } = user._doc;
+    res.status(200).json(rest);
+  } catch (error) {
+    res.clearCookie('access_token');
+    res.clearCookie('token');
+    res.status(401).json({ valid: false, message: 'Session validation failed' });
   }
 };

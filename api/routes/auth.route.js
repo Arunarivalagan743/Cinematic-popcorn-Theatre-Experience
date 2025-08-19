@@ -2,7 +2,7 @@
 
 
 import express from 'express';
-import { signin, signup, google, signout, refreshToken, validateToken } from '../controllers/auth.controller.js';
+import { signin, signup, google, signout, refreshToken, validateToken, validateSession } from '../controllers/auth.controller.js';
 
 const router = express.Router();
 
@@ -12,5 +12,6 @@ router.post('/google', google);
 router.get('/signout', signout);
 router.post('/refresh-token', refreshToken);
 router.get('/validate', validateToken);
+router.get('/validate-session', validateSession);
 
 export default router;

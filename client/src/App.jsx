@@ -7,6 +7,8 @@ import SignUp from './pages/SignUp';
 import Profile from './pages/Profile';
 import Header from './components/Header';
 import PrivateRoute from './components/PrivateRoute';
+import AdminPrivateRoute from './components/AdminPrivateRoute';
+import DebugPage from './pages/DebugPage';
 
 import TicketsNew from './pages/Tickets-new';
 import Faq from './pages/Faq';
@@ -19,6 +21,14 @@ import CancellationRefund from './pages/CancellationRefund';
 import PaymentNew from './pages/payment-new';
 import { useEffect } from 'react';
 import { connectSocket, disconnectSocket } from './services/socketService';
+
+// Admin Components
+import AdminLayout from './components/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserManagement from './pages/admin/UserManagement';
+import MovieManagement from './pages/admin/MovieManagement';
+import BookingManagement from './pages/admin/BookingManagement';
+import Reports from './pages/admin/Reports';
 
 export default function App() {
   // Initialize and clean up socket connection
@@ -38,6 +48,7 @@ export default function App() {
       <main className="flex-grow">
         <Routes>
           <Route path='/' element={<Home />} />
+          <Route path='/debug' element={<DebugPage />} />
           <Route path='/about' element={<About />} />
           <Route path='/contact' element={<Contact />} />
           <Route path='/pricing' element={<Pricing />} />
@@ -60,6 +71,43 @@ export default function App() {
             <Route path='/profile' element={<Profile />} /> {/* Default to new profile */}
             <Route path='/profile-legacy' element={<Profile />} /> {/* Kept for backward compatibility */}
           </Route>
+
+          {/* Admin Routes */}
+          <Route path='/admin/dashboard' element={
+            <AdminPrivateRoute>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </AdminPrivateRoute>
+          } />
+          <Route path='/admin/users' element={
+            <AdminPrivateRoute>
+              <AdminLayout>
+                <UserManagement />
+              </AdminLayout>
+            </AdminPrivateRoute>
+          } />
+          <Route path='/admin/movies' element={
+            <AdminPrivateRoute>
+              <AdminLayout>
+                <MovieManagement />
+              </AdminLayout>
+            </AdminPrivateRoute>
+          } />
+          <Route path='/admin/bookings' element={
+            <AdminPrivateRoute>
+              <AdminLayout>
+                <BookingManagement />
+              </AdminLayout>
+            </AdminPrivateRoute>
+          } />
+          <Route path='/admin/reports' element={
+            <AdminPrivateRoute>
+              <AdminLayout>
+                <Reports />
+              </AdminLayout>
+            </AdminPrivateRoute>
+          } />
         </Routes>
       </main>
     </BrowserRouter>

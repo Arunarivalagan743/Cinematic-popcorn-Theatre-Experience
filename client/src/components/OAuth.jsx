@@ -8,13 +8,18 @@ export default function OAuth() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const backendUrl = 
+    process.env.NODE_ENV === 'production' 
+      ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
+      : 'http://localhost:5000';
+
   const handleGoogleClick = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const auth = getAuth(app);
 
       const result = await signInWithPopup(auth, provider);
-    const res = await fetch('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/auth/google', {
+    const res = await fetch(`${backendUrl}/api/auth/google`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

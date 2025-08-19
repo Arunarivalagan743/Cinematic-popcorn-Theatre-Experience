@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -12,6 +10,7 @@ import {
   FaTimes,
   FaSignInAlt,
   FaEnvelope,
+  FaUserShield,
 } from "react-icons/fa";
 
 export default function Header() {
@@ -72,6 +71,19 @@ export default function Header() {
             </li>
           ))}
 
+          {/* Admin Panel Link (only for admin users) */}
+          {currentUser && (currentUser.role === 'admin' || currentUser.role === 'manager' || currentUser.role === 'staff') && (
+            <li
+              onClick={() => handleNavigation("/admin/dashboard")}
+              className="flex items-center gap-2 text-lg font-medium transition-all duration-300 cursor-pointer px-3 py-2 hover:text-[#C8A951] border-b border-transparent hover:border-[#C8A951] group"
+            >
+              <span className="text-xl text-[#C8A951] group-hover:text-[#E50914] transition-all duration-300">
+                <FaUserShield />
+              </span>
+              Admin
+            </li>
+          )}
+
           {/* Profile or Sign In */}
           <Link
             to={currentUser ? "/profile" : "/sign-in"}
@@ -85,74 +97,100 @@ export default function Header() {
                 style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}
               />
             ) : (
-              <li className="text-lg font-medium px-4 py-2 hover:text-[#C8A951] border border-[#C8A951] hover:shadow-md hover:shadow-[#C8A951]/30">
+              <div className="flex items-center gap-2 text-lg font-medium transition-all duration-300 cursor-pointer px-3 py-2 hover:text-[#C8A951] border-b border-transparent hover:border-[#C8A951]">
+                <FaSignInAlt className="text-xl text-[#C8A951]" />
                 Sign In
-              </li>
+              </div>
             )}
           </Link>
         </ul>
-
-        {/* Sidebar for Mobile */}
-        {sidebarOpen && (
-          <>
-            <div
-              className="fixed inset-0 bg-black bg-opacity-80 z-30"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <div className="fixed inset-y-0 left-0 z-40 w-64 bg-[#0D0D0D] text-[#F5F5F5] shadow-xl transform transition-transform duration-300" style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.2)'}}>
-              <div className="p-5 space-y-6">
-                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#C8A951] to-[#E50914]" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>
-                  🎥 Cinematic Popcorn Park
-                </h1>
-                <ul className="flex flex-col gap-6 text-lg font-[Poppins], sans-serif mt-8">
-                  {[
-                    { name: "Home", icon: <FaHome />, path: "/" },
-                    { name: "About", icon: <FaInfoCircle />, path: "/about" },
-                    { name: "Contact", icon: <FaEnvelope />, path: "/contact" },
-                    { name: "FAQ", icon: <FaQuestionCircle />, path: "/faq" },
-                  ].map(({ name, icon, path }) => (
-                    <li
-                      key={name}
-                      onClick={() => handleNavigation(path)}
-                      className="flex items-center gap-3 text-[#F5F5F5] font-medium px-3 py-2 hover:bg-[#0D0D0D] hover:text-[#C8A951] border-l-2 border-transparent hover:border-[#C8A951] transition-all duration-300"
-                    >
-                      <span className="text-xl text-[#C8A951]">{icon}</span>
-                      {name}
-                    </li>
-                  ))}
-
-                  {/* Profile or Sign In */}
-                  <li
-                    onClick={() =>
-                      currentUser
-                        ? handleNavigation("/profile")
-                        : handleNavigation("/sign-in")
-                    }
-                    className="flex items-center gap-3 text-[#F5F5F5] font-medium px-3 py-2 hover:bg-[#0D0D0D] hover:text-[#C8A951] border-l-2 border-transparent hover:border-[#C8A951] transition-all duration-300 cursor-pointer mt-4"
-                  >
-                    {currentUser ? (
-                      <>
-                        <img
-                          src={currentUser.profilePicture}
-                          alt="profile"
-                          className="h-10 w-10 border-2 border-[#C8A951]"
-                          style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}
-                        />
-                        <span>Profile</span>
-                      </>
-                    ) : (
-                      <>
-                        <FaSignInAlt className="text-xl text-[#C8A951]" />
-                        <span>Sign In</span>
-                      </>
-                    )}
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </>
-        )}
       </div>
+
+      {/* Mobile Sidebar */}
+      {sidebarOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+
+          {/* Sidebar */}
+          <div className="fixed top-0 left-0 w-72 h-full bg-gradient-to-b from-[#0D0D0D] to-[#1A1A1A] z-50 transform transition-transform duration-300 md:hidden shadow-2xl">
+            <div className="p-6">
+              {/* Close Button */}
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="absolute top-4 right-4 text-2xl text-[#C8A951] hover:text-[#E50914] transition-colors duration-300"
+              >
+                <FaTimes />
+              </button>
+
+              {/* Brand */}
+              <h2 className="text-2xl font-bold text-[#C8A951] mb-8 font-cinzel">
+                Cinematic Popcorn Park
+              </h2>
+
+              {/* Navigation Links */}
+              <ul className="space-y-2">
+                {[
+                  { name: "Home", icon: <FaHome />, path: "/" },
+                  { name: "About", icon: <FaInfoCircle />, path: "/about" },
+                  { name: "Contact", icon: <FaEnvelope />, path: "/contact" },
+                  { name: "FAQ", icon: <FaQuestionCircle />, path: "/faq" },
+                ].map(({ name, icon, path }) => (
+                  <li
+                    key={name}
+                    onClick={() => handleNavigation(path)}
+                    className="flex items-center gap-3 text-[#F5F5F5] font-medium px-3 py-2 hover:bg-[#0D0D0D] hover:text-[#C8A951] border-l-2 border-transparent hover:border-[#C8A951] transition-all duration-300 cursor-pointer"
+                  >
+                    <span className="text-xl text-[#C8A951]">{icon}</span>
+                    {name}
+                  </li>
+                ))}
+
+                {/* Admin Panel Link (mobile) */}
+                {currentUser && (currentUser.role === 'admin' || currentUser.role === 'manager' || currentUser.role === 'staff') && (
+                  <li
+                    onClick={() => handleNavigation("/admin/dashboard")}
+                    className="flex items-center gap-3 text-[#F5F5F5] font-medium px-3 py-2 hover:bg-[#0D0D0D] hover:text-[#C8A951] border-l-2 border-transparent hover:border-[#C8A951] transition-all duration-300"
+                  >
+                    <span className="text-xl text-[#C8A951]"><FaUserShield /></span>
+                    Admin Panel
+                  </li>
+                )}
+
+                {/* Profile or Sign In */}
+                <li
+                  onClick={() =>
+                    currentUser
+                      ? handleNavigation("/profile")
+                      : handleNavigation("/sign-in")
+                  }
+                  className="flex items-center gap-3 text-[#F5F5F5] font-medium px-3 py-2 hover:bg-[#0D0D0D] hover:text-[#C8A951] border-l-2 border-transparent hover:border-[#C8A951] transition-all duration-300 cursor-pointer mt-4"
+                >
+                  {currentUser ? (
+                    <>
+                      <img
+                        src={currentUser.profilePicture}
+                        alt="profile"
+                        className="h-10 w-10 border-2 border-[#C8A951]"
+                        style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}
+                      />
+                      <span>Profile</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaSignInAlt className="text-xl text-[#C8A951]" />
+                      <span>Sign In</span>
+                    </>
+                  )}
+                </li>
+              </ul>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Decorative Gradient Line */}
       <div className="h-0.5 bg-gradient-to-r from-[#C8A951] via-[#E50914] to-[#C8A951] animate-slide-right" style={{boxShadow: '0 0 5px rgba(200, 169, 81, 0.5)'}} />

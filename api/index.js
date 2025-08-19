@@ -20,6 +20,7 @@ import showtimeRoutes from './routes/showtime.route.js';
 import seatRoutes from './routes/seat.route.js';
 import parkingRoutes from './routes/parking.route.js';
 import seatGeneratorRoutes from './routes/seatGenerator.route.js';
+import adminRoutes from './routes/admin.route.js';
 
 // Controllers for scheduled tasks
 import { archivePastShowtimes, generateNextDayShowtimes } from './controllers/showtime.controller.js';
@@ -126,6 +127,7 @@ app.use('/api/showtimes', showtimeRoutes);
 app.use('/api/seats', seatRoutes);
 app.use('/api/parking', parkingRoutes);
 app.use('/api/seat-generator', seatGeneratorRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Schedule jobs
 // Release expired holds every minute

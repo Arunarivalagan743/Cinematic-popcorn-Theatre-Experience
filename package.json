@@ -87,6 +87,7 @@
     "ms": "^2.0.0",
     "negotiator": "^0.6.3",
     "node-cron": "^4.2.1",
+    "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.10.1",
     "nodemon": "^3.1.7",
@@ -146,7 +147,8 @@
   "scripts": {
     "dev": "nodemon api/index.js",
     "start": "node api/index.js",
-    "host": "vite --host"
+    "host": "vite --host",
+    "create-admin": "node api/utils/createAdmin.js"
   },
   "keywords": [],
   "author": "",

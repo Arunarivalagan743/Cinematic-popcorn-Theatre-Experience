@@ -17,6 +17,11 @@ export default function SignIn() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const backendUrl = 
+    process.env.NODE_ENV === 'production' 
+      ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
+      : 'http://localhost:5000';
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
@@ -25,7 +30,8 @@ export default function SignIn() {
     e.preventDefault();
     try {
       dispatch(signInStart());
-   const res = await fetch('https://cinematic-popcorn-theatre-experience-2.onrender.com/api/auth/signin', {
+      console.log('🔐 Starting signin to:', `${backendUrl}/api/auth/signin`);
+   const res = await fetch(`${backendUrl}/api/auth/signin`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -34,14 +40,26 @@ export default function SignIn() {
   body: JSON.stringify(formData),
 });
 
+      console.log('📡 SignIn response status:', res.status);
+      console.log('🍪 Response headers:', res.headers);
       const data = await res.json();
+      console.log('📋 SignIn data received:', data);
+      
       if (data.success === false) {
         dispatch(signInFailure(data));
         return;
       }
       dispatch(signInSuccess(data));
-      navigate('/');
+      
+      // Check user role and redirect accordingly
+      if (data.role === 'admin' || data.role === 'manager' || data.role === 'staff') {
+        console.log('👑 Admin user detected, redirecting to dashboard');
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
+      console.error('❌ SignIn error:', error);
       dispatch(signInFailure(error));
     }
   };

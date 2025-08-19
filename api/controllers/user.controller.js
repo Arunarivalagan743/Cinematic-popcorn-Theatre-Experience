@@ -9,6 +9,16 @@ export const test = (req, res) => {
   });
 };
 
+// Debug endpoint to check users
+export const debugUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({}, 'username email role isActive');
+    res.json({ users, count: users.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get user with their bookings
 export const getUserWithBookings = async (req, res, next) => {
   try {
