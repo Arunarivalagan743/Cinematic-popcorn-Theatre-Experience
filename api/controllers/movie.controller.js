@@ -32,22 +32,83 @@ export const createMovie = async (req, res) => {
 // Get all movies with their showtimes
 export const getAllMovies = async (req, res) => {
   try {
+    console.log("getAllMovies called at", new Date().toISOString());
+    
+    // Force check for ended showtimes first
+    const currentTime = new Date();
+    
+    // Directly update any past showtimes to be archived
+    const archiveResult = await Showtime.updateMany(
+      { endTime: { $lt: currentTime }, isArchived: false },
+      { $set: { isArchived: true } }
+    );
+    
+    if (archiveResult.modifiedCount > 0) {
+      console.log(`getAllMovies automatically archived ${archiveResult.modifiedCount} past showtimes`);
+    }
+    
     const movies = await Movie.find();
     
     // For each movie, get its showtimes
     const moviesWithShowtimes = await Promise.all(movies.map(async (movie) => {
-      const showtimes = await Showtime.find({ 
+      // Get all non-archived showtimes
+      const allShowtimes = await Showtime.find({ 
         movieId: movie._id,
-        isArchived: false,
-        startTime: { $gt: new Date() } // Only future showtimes
+        isArchived: false
       }).sort({ date: 1, startTime: 1 });
+      
+      // Process and filter showtimes
+      const validShowtimes = allShowtimes.filter(showtime => {
+        const showtimeStart = new Date(showtime.startTime);
+        const showtimeEnd = new Date(showtime.endTime);
+        const cutoffTime = new Date(showtimeStart.getTime() - (showtime.cutoffMinutes * 60000));
+        
+        // Log detailed information about each showtime for debugging
+        const isAfterEnd = currentTime > showtimeEnd;
+        const isAfterStart = currentTime > showtimeStart;
+        const isAfterCutoff = currentTime > cutoffTime;
+        
+        console.log(`Showtime ${showtime._id} check:`, {
+          movieName: movie.name,
+          screen: showtime.screen,
+          startTime: showtimeStart.toLocaleString(),
+          endTime: showtimeEnd.toLocaleString(),
+          cutoffTime: cutoffTime.toLocaleString(),
+          currentTime: currentTime.toLocaleString(),
+          isAfterCutoff,
+          isAfterStart,
+          isAfterEnd,
+          isArchived: showtime.isArchived,
+          shouldShow: !isAfterEnd && !isAfterStart && !isAfterCutoff
+        });
+        
+        // If the showtime has already ended, it should have been archived
+        // If not archived, manually update it now (this is a safeguard)
+        if (isAfterEnd && !showtime.isArchived) {
+          console.log(`WARNING: Showtime ${showtime._id} has ended but is not archived. Archiving now.`);
+          // Update in database (async, don't wait)
+          Showtime.updateOne({ _id: showtime._id }, { $set: { isArchived: true } })
+            .then(() => console.log(`Showtime ${showtime._id} has been archived`))
+            .catch(err => console.error(`Error archiving showtime ${showtime._id}:`, err));
+          
+          // Don't include this showtime in the results
+          return false;
+        }
+        
+        // Only include showtimes that:
+        // 1. Have not ended
+        // 2. Have not started
+        // 3. Are still within the booking window (cutoff time)
+        return !isAfterEnd && !isAfterStart && !isAfterCutoff;
+      });
       
       return {
         ...movie._doc,
-        showtimes
+        showtimes: validShowtimes
       };
     }));
     
+    console.log(`Returning ${moviesWithShowtimes.length} movies with valid showtimes`);
     res.status(200).json(moviesWithShowtimes);
   } catch (error) {
     console.error('Error fetching movies:', error);

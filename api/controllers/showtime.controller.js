@@ -139,13 +139,27 @@ export const getShowtimesByMovie = async (req, res) => {
     
     const currentDate = new Date();
     
+    // First check if we need to archive any expired showtimes
+    await archivePastShowtimes();
+    
+    // Get all valid showtimes for this movie that:
+    // 1. Are not archived
+    // 2. Have a start time in the future
+    // 3. The cutoff time has not passed
     const showtimes = await Showtime.find({ 
       movieId, 
       isArchived: false,
       startTime: { $gt: currentDate } // Only future showtimes
     }).sort({ date: 1, startTime: 1 });
     
-    res.status(200).json(showtimes);
+    // Filter out showtimes where the booking cutoff has passed
+    const validShowtimes = showtimes.filter(showtime => {
+      const showtimeStart = new Date(showtime.startTime);
+      const cutoffTime = new Date(showtimeStart.getTime() - (showtime.cutoffMinutes * 60000));
+      return currentDate <= cutoffTime;
+    });
+    
+    res.status(200).json(validShowtimes);
   } catch (error) {
     console.error('Error fetching showtimes for movie:', error);
     res.status(500).json({ message: 'Failed to fetch showtimes', error: error.message });
@@ -156,6 +170,9 @@ export const getShowtimesByMovie = async (req, res) => {
 export const getShowtimeById = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // First, check for and archive past showtimes
+    await archivePastShowtimes();
     
     // Check for valid ObjectId to prevent casting errors
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -171,7 +188,53 @@ export const getShowtimeById = async (req, res) => {
       return res.status(404).json({ message: 'Showtime not found' });
     }
     
-    res.status(200).json(showtime);
+    // Check if showtime has already ended or is archived
+    const currentTime = new Date();
+    const showtimeEnd = new Date(showtime.endTime);
+    
+    if (showtime.isArchived) {
+      // Return the showtime with a flag indicating it's archived
+      return res.status(200).json({
+        ...showtime._doc,
+        bookingAvailable: false,
+        statusMessage: 'This showtime has been archived'
+      });
+    }
+    
+    if (currentTime > showtimeEnd) {
+      // Return the showtime with a flag indicating it has ended
+      return res.status(200).json({
+        ...showtime._doc,
+        bookingAvailable: false,
+        statusMessage: 'This showtime has already ended'
+      });
+    }
+    
+    // Check if showtime has already started
+    const showtimeStart = new Date(showtime.startTime);
+    if (currentTime > showtimeStart) {
+      return res.status(200).json({
+        ...showtime._doc,
+        bookingAvailable: false,
+        statusMessage: 'This showtime has already started'
+      });
+    }
+    
+    // Check if cutoff time has passed
+    const cutoffTime = new Date(showtimeStart.getTime() - (showtime.cutoffMinutes * 60000));
+    if (currentTime > cutoffTime) {
+      return res.status(200).json({
+        ...showtime._doc,
+        bookingAvailable: false,
+        statusMessage: `Booking cutoff time (${showtime.cutoffMinutes} minutes before showtime) has passed`
+      });
+    }
+    
+    // Showtime is bookable
+    res.status(200).json({
+      ...showtime._doc,
+      bookingAvailable: true
+    });
   } catch (error) {
     console.error('Error fetching showtime:', error);
     res.status(500).json({ message: 'Failed to fetch showtime', error: error.message });
@@ -182,13 +245,76 @@ export const getShowtimeById = async (req, res) => {
 export const archivePastShowtimes = async () => {
   try {
     const currentDate = new Date();
+    console.log(`Running archivePastShowtimes at ${currentDate.toISOString()}`);
     
+    // First, find all showtimes that should be archived
+    const showtimesToArchive = await Showtime.find({
+      endTime: { $lt: currentDate },
+      isArchived: false
+    });
+    
+    if (showtimesToArchive.length > 0) {
+      console.log(`Found ${showtimesToArchive.length} showtimes to archive:`, 
+        showtimesToArchive.map(st => ({
+          id: st._id,
+          movieId: st.movieId,
+          screen: st.screen,
+          startTime: st.startTime,
+          endTime: st.endTime
+        }))
+      );
+    }
+    
+    // Archive showtimes that have ended (end time is in the past)
     const result = await Showtime.updateMany(
       { endTime: { $lt: currentDate }, isArchived: false },
       { $set: { isArchived: true } }
     );
     
-    console.log(`Archived ${result.modifiedCount} past showtimes`);
+    if (result.modifiedCount > 0) {
+      console.log(`Successfully archived ${result.modifiedCount} past showtimes at ${currentDate.toISOString()}`);
+    } else {
+      console.log(`No showtimes were archived. Found ${showtimesToArchive.length} candidates but no updates made.`);
+      
+      // Check if there's a date format issue
+      if (showtimesToArchive.length > 0) {
+        const sample = showtimesToArchive[0];
+        console.log('Sample showtime that should be archived:', {
+          id: sample._id,
+          endTime: sample.endTime,
+          endTimeType: typeof sample.endTime,
+          currentTime: currentDate,
+          comparison: sample.endTime < currentDate ? 'should be archived' : 'should not be archived',
+          timeDiff: (currentDate - sample.endTime) / (1000 * 60) + ' minutes'
+        });
+      }
+    }
+    
+    // If we've archived showtimes, check if we need to generate next day's showtimes
+    if (result.modifiedCount > 0) {
+      // Get tomorrow's date
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      // Check if we already have showtimes for tomorrow
+      const tomorrowShowtimes = await Showtime.find({
+        date: {
+          $gte: tomorrow,
+          $lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+        }
+      });
+      
+      // If no showtimes for tomorrow, generate them
+      if (tomorrowShowtimes.length === 0) {
+        console.log('No showtimes found for tomorrow. Generating new showtimes...');
+        const generatedCount = await generateNextDayShowtimes();
+        console.log(`Generated ${generatedCount} showtimes for tomorrow.`);
+      } else {
+        console.log(`Found ${tomorrowShowtimes.length} showtimes already scheduled for tomorrow.`);
+      }
+    }
+    
     return result.modifiedCount;
   } catch (error) {
     console.error('Error archiving past showtimes:', error);
@@ -196,16 +322,100 @@ export const archivePastShowtimes = async () => {
   }
 };
 
+// Update a showtime by ID
+export const updateShowtime = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { movieId, screen, startTime, endTime, date, cutoffMinutes } = req.body;
+
+    // Check if the showtime exists
+    const showtime = await Showtime.findById(id);
+    if (!showtime) {
+      return res.status(404).json({ message: 'Showtime not found' });
+    }
+
+    // Check if the movie exists
+    const movie = await Movie.findById(movieId);
+    if (!movie) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+
+    // Update the showtime
+    const updatedShowtime = await Showtime.findByIdAndUpdate(
+      id,
+      {
+        movieId,
+        screen,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        date: new Date(date),
+        cutoffMinutes: cutoffMinutes || 15
+      },
+      { new: true }
+    );
+
+    res.status(200).json(updatedShowtime);
+  } catch (error) {
+    console.error('Error updating showtime:', error);
+    res.status(500).json({ message: 'Error updating showtime', error: error.message });
+  }
+};
+
+// Delete a showtime by ID
+export const deleteShowtime = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if the showtime exists
+    const showtime = await Showtime.findById(id);
+    if (!showtime) {
+      return res.status(404).json({ message: 'Showtime not found' });
+    }
+
+    // Delete associated seats
+    await Seat.deleteMany({ showtimeId: id });
+    
+    // Delete associated parking slots
+    await ParkingSlot.deleteMany({ showtimeId: id });
+    
+    // Delete the showtime
+    await Showtime.findByIdAndDelete(id);
+
+    res.status(200).json({ message: 'Showtime deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting showtime:', error);
+    res.status(500).json({ message: 'Error deleting showtime', error: error.message });
+  }
+};
+
 // Generate showtimes for the next day
 export const generateNextDayShowtimes = async () => {
   try {
+    console.log('Generating showtimes for next day...');
+    
     // Get all active movies
     const movies = await Movie.find();
+    console.log(`Found ${movies.length} active movies`);
     
     // Calculate the date for tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
+    
+    console.log(`Generating showtimes for date: ${tomorrow.toISOString()}`);
+    
+    // Check if showtimes already exist for tomorrow
+    const existingShowtimes = await Showtime.find({
+      date: {
+        $gte: tomorrow,
+        $lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+      }
+    });
+    
+    if (existingShowtimes.length > 0) {
+      console.log(`Found ${existingShowtimes.length} showtimes already existing for tomorrow. Skipping generation.`);
+      return existingShowtimes.length; // Return existing count
+    }
     
     // Different show timings for each screen - one timing per screen
     const screenTimings = [
@@ -658,5 +868,78 @@ export const updateExistingShowtimes = async () => {
   } catch (error) {
     console.error('Error updating existing showtimes:', error);
     throw error;
+  }
+};
+
+// Force archive all past showtimes regardless of their current status
+export const forceArchivePastShowtimes = async (req, res) => {
+  try {
+    const currentDate = new Date();
+    console.log(`Force archiving all past showtimes at ${currentDate.toISOString()}`);
+    
+    // Find all showtimes that should be archived
+    const showtimesToArchive = await Showtime.find({
+      endTime: { $lt: currentDate }
+    });
+    
+    console.log(`Found ${showtimesToArchive.length} total past showtimes`);
+    
+    // Archive all showtimes that have ended
+    const result = await Showtime.updateMany(
+      { endTime: { $lt: currentDate } },
+      { $set: { isArchived: true } }
+    );
+    
+    console.log(`Force archived ${result.modifiedCount} past showtimes`);
+    
+    // Check if we need to generate next day's showtimes
+    // Get tomorrow's date
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    // Check if we already have showtimes for tomorrow
+    const tomorrowShowtimes = await Showtime.find({
+      date: {
+        $gte: tomorrow,
+        $lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+      }
+    });
+    
+    let nextDayShowtimesCount = 0;
+    
+    // If no showtimes for tomorrow, generate them
+    if (tomorrowShowtimes.length === 0) {
+      console.log('No showtimes found for tomorrow. Generating new showtimes...');
+      nextDayShowtimesCount = await generateNextDayShowtimes();
+      console.log(`Generated ${nextDayShowtimesCount} showtimes for tomorrow.`);
+    } else {
+      console.log(`Found ${tomorrowShowtimes.length} showtimes already scheduled for tomorrow.`);
+    }
+    
+    // Also return detailed information for debugging
+    const archivedShowtimes = await Showtime.find({
+      endTime: { $lt: currentDate },
+      isArchived: true
+    }).populate('movieId', 'name');
+    
+    res.status(200).json({
+      message: `Successfully archived ${result.modifiedCount} past showtimes`,
+      modifiedCount: result.modifiedCount,
+      totalPastShowtimes: showtimesToArchive.length,
+      totalArchivedNow: archivedShowtimes.length,
+      nextDayShowtimesGenerated: nextDayShowtimesCount,
+      sample: archivedShowtimes.slice(0, 5).map(st => ({
+        id: st._id,
+        movieName: st.movieId?.name || 'Unknown movie',
+        screen: st.screen,
+        startTime: st.startTime,
+        endTime: st.endTime,
+        isArchived: st.isArchived
+      }))
+    });
+  } catch (error) {
+    console.error('Error force archiving past showtimes:', error);
+    res.status(500).json({ message: 'Error archiving showtimes', error: error.message });
   }
 };

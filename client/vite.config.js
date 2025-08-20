@@ -9,10 +9,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://cinematic-popcorn-theatre-experience-2.onrender.com',  // Make sure this matches your backend URL
+        target: 'https://cinematic-popcorn-theatre-experience-2.onrender.com',  // Production backend URL
         changeOrigin: true,
         secure: false,
       },
     },
   },
+  define: {
+    // This makes process.env.NODE_ENV available in the client code
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+  }
 });

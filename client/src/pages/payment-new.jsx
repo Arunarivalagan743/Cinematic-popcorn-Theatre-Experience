@@ -168,11 +168,21 @@ const Payment = () => {
       // If it's a 401/403 error (invalid/expired token), try to fix it
       if (error.response?.status === 403 || error.response?.status === 401) {
         try {
+          // First check if we have a valid user in the Redux store
+          if (!currentUser || !currentUser._id) {
+            throw new Error('No user information available for token refresh');
+          }
+          
           // Try to refresh the token for the current user
           console.log('Attempting to refresh token for user:', currentUser._id);
           const refreshResponse = await axios.post(`${backendUrl}/api/auth/refresh-token`, {
             userId: currentUser._id
-          }, { withCredentials: true });
+          }, { 
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
           
           if (refreshResponse.data) {
             // Token refreshed successfully, try payment again
@@ -187,8 +197,8 @@ const Payment = () => {
         } catch (refreshError) {
           console.error('Token refresh failed:', refreshError);
           // Clear invalid cookies and redirect to sign in
-          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname + '; secure; samesite=none';
+          document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname + '; secure; samesite=none';
           
           Swal.fire({
             title: 'Session Expired',

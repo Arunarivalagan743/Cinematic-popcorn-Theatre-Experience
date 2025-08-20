@@ -93,22 +93,33 @@ export const holdSeats = async (req, res) => {
       return res.status(404).json({ message: 'Showtime not found' });
     }
     
-    // Check if the showtime is bookable based on cutoff time
+// Check if the showtime is bookable based on various conditions
     const currentTime = new Date();
     const showtimeStart = new Date(showtime.startTime);
+    const showtimeEnd = new Date(showtime.endTime);
     const cutoffTime = new Date(showtimeStart.getTime() - (showtime.cutoffMinutes * 60000));
     
+    // Check if showtime is archived
+    if (showtime.isArchived) {
+      return res.status(400).json({ message: 'Booking not available. This showtime has been archived' });
+    }
+    
+    // Check if showtime has already ended
+    if (currentTime > showtimeEnd) {
+      return res.status(400).json({ message: 'Booking not available. This showtime has already ended' });
+    }
+    
+    // Check if showtime has already started
     if (currentTime > showtimeStart) {
       return res.status(400).json({ message: 'Booking not available. Showtime has already started' });
     }
     
+    // Check if cutoff time has passed
     if (currentTime > cutoffTime) {
       return res.status(400).json({ 
-        message: `Booking not available. Cutoff time (${showtime.cutoffMinutes} minutes before showtime) has passed`
+        message: `Booking not available. Cutoff time (${showtime.cutoffMinutes} minutes before showtime) has passed` 
       });
-    }
-    
-    // Set expiration time (5 minutes from now)
+    }    // Set expiration time (5 minutes from now)
     const holdUntil = new Date(Date.now() + 15 * 60000); // 15 minutes
     
     // Update all seats to HELD status if they are available

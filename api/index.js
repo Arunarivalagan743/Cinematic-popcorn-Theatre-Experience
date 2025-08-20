@@ -22,6 +22,9 @@ import parkingRoutes from './routes/parking.route.js';
 import seatGeneratorRoutes from './routes/seatGenerator.route.js';
 import adminRoutes from './routes/admin.route.js';
 
+// Models
+import Showtime from './models/showtime.model.js';
+
 // Controllers for scheduled tasks
 import { archivePastShowtimes, generateNextDayShowtimes } from './controllers/showtime.controller.js';
 import { releaseExpiredHolds } from './controllers/seat.controller.js';
@@ -130,14 +133,23 @@ app.use('/api/seat-generator', seatGeneratorRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Schedule jobs
-// Release expired holds every minute
+// Release expired holds and check for past showtimes every minute
 cron.schedule('* * * * *', async () => {
   try {
     // Import models here to avoid circular dependencies
     const Seat = mongoose.model('Seat');
     const ParkingSlot = mongoose.model('ParkingSlot');
     
-    // Release expired seat holds
+    console.log(`Running minute scheduler at ${new Date().toISOString()}`);
+    
+    // First, archive past showtimes to ensure accurate booking status
+    const archivedCount = await archivePastShowtimes();
+    if (archivedCount > 0) {
+      console.log(`Archived ${archivedCount} past showtimes during minute scheduler`);
+      io.emit('showtimesUpdated', { message: 'Some showtimes have been archived' });
+    }
+    
+    // Then release expired seat holds
     const releasedSeats = await releaseExpiredHolds();
     
     // Emit socket events for each affected showtime
@@ -161,25 +173,56 @@ cron.schedule('* * * * *', async () => {
       });
     }
   } catch (error) {
-    console.error('Error in scheduled release of expired holds:', error);
+    console.error('Error in scheduled release of expired holds and showtime archiving:', error);
   }
 });
 
-// Archive past showtimes daily at midnight
-cron.schedule('0 0 * * *', async () => {
+// Archive past showtimes every minute to ensure timely updates
+cron.schedule('* * * * *', async () => {
   try {
-    await archivePastShowtimes();
+    console.log(`Running archiving cron job at ${new Date().toISOString()}`);
+    const archivedCount = await archivePastShowtimes();
+    
+    if (archivedCount > 0) {
+      console.log(`Cron job archived ${archivedCount} showtimes`);
+      // Notify clients about archived showtimes if any were updated
+      io.emit('showtimesUpdated', { 
+        message: 'Some showtimes have been archived',
+        count: archivedCount,
+        timestamp: new Date().toISOString()
+      });
+    }
   } catch (error) {
-    console.error('Error archiving past showtimes:', error);
+    console.error('Error in cron job archiving past showtimes:', error);
   }
 });
 
-// Generate next day's showtimes daily at 1 AM
-cron.schedule('0 1 * * *', async () => {
+// Check and generate next day's showtimes every 30 minutes
+cron.schedule('*/30 * * * *', async () => {
   try {
-    await generateNextDayShowtimes();
+    console.log('Checking if next day showtimes need to be generated...');
+    // Get tomorrow's date
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    // Check if we already have showtimes for tomorrow
+    const tomorrowShowtimes = await Showtime.find({
+      date: {
+        $gte: tomorrow,
+        $lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+      }
+    });
+    
+    if (tomorrowShowtimes.length === 0) {
+      console.log('No showtimes found for tomorrow. Generating new showtimes...');
+      const count = await generateNextDayShowtimes();
+      console.log(`Generated ${count} showtimes for tomorrow.`);
+    } else {
+      console.log(`Already have ${tomorrowShowtimes.length} showtimes for tomorrow. Skipping generation.`);
+    }
   } catch (error) {
-    console.error('Error generating next day showtimes:', error);
+    console.error('Error checking/generating next day showtimes:', error);
   }
 });
 

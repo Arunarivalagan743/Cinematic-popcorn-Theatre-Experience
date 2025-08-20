@@ -21,6 +21,7 @@ import CancellationRefund from './pages/CancellationRefund';
 import PaymentNew from './pages/payment-new';
 import { useEffect } from 'react';
 import { connectSocket, disconnectSocket } from './services/socketService';
+import { setupTokenRefreshInterceptor } from './utils/tokenRefresher';
 
 // Admin Components
 import AdminLayout from './components/AdminLayout';
@@ -29,12 +30,17 @@ import UserManagement from './pages/admin/UserManagement';
 import MovieManagement from './pages/admin/MovieManagement';
 import BookingManagement from './pages/admin/BookingManagement';
 import Reports from './pages/admin/Reports';
+import ShowtimesManagement from './pages/admin/ShowtimesManagement';
+import MovieShowtimeManagement from './pages/admin/MovieShowtimeManagement';
 
 export default function App() {
   // Initialize and clean up socket connection
   useEffect(() => {
     // Connect to socket server on app load
     connectSocket();
+    
+    // Setup axios interceptors for automatic token refresh
+    setupTokenRefreshInterceptor();
     
     // Disconnect socket when app unmounts
     return () => {
@@ -105,6 +111,20 @@ export default function App() {
             <AdminPrivateRoute>
               <AdminLayout>
                 <Reports />
+              </AdminLayout>
+            </AdminPrivateRoute>
+          } />
+          <Route path='/admin/showtimes' element={
+            <AdminPrivateRoute>
+              <AdminLayout>
+                <ShowtimesManagement />
+              </AdminLayout>
+            </AdminPrivateRoute>
+          } />
+          <Route path='/admin/movieshowtimes' element={
+            <AdminPrivateRoute>
+              <AdminLayout>
+                <MovieShowtimeManagement />
               </AdminLayout>
             </AdminPrivateRoute>
           } />

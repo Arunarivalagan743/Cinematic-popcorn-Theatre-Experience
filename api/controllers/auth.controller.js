@@ -156,26 +156,71 @@ export const refreshToken = async (req, res, next) => {
   try {
     const { userId } = req.body;
     
-    if (!userId) {
-      return next(errorHandler(400, 'User ID is required'));
+    // First try to get user from the request body
+    if (userId) {
+      // Find the user by ID
+      const user = await User.findById(userId);
+      if (user) {
+        // Generate new token
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+        const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+        
+        const { password: hashedPassword, ...rest } = user._doc;
+        
+        // Cookie settings for production
+        const cookieOptions = {
+          httpOnly: true,
+          expires: expiryDate,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        };
+        
+        res
+          .cookie('access_token', token, cookieOptions)
+          .status(200)
+          .json(rest);
+          
+        return;
+      }
     }
     
-    // Find the user
-    const user = await User.findById(userId);
-    if (!user) {
-      return next(errorHandler(404, 'User not found'));
+    // If no userId or user not found by ID, try to get from existing token
+    const token = req.cookies.access_token || req.cookies.token;
+    
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        
+        if (user) {
+          // Generate new token
+          const newToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+          const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+          
+          const { password: hashedPassword, ...rest } = user._doc;
+          
+          // Cookie settings for production
+          const cookieOptions = {
+            httpOnly: true,
+            expires: expiryDate,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+          };
+          
+          res
+            .cookie('access_token', newToken, cookieOptions)
+            .status(200)
+            .json(rest);
+            
+          return;
+        }
+      } catch (err) {
+        // Token verification failed, continue to error
+      }
     }
     
-    // Generate new token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    
-    const { password: hashedPassword, ...rest } = user._doc;
-    
-    res
-      .cookie('access_token', token, { httpOnly: true, expires: expiryDate })
-      .status(200)
-      .json(rest);
+    // If we get here, no valid user was found
+    return next(errorHandler(400, 'Unable to refresh token - no valid user found'));
   } catch (error) {
     next(error);
   }

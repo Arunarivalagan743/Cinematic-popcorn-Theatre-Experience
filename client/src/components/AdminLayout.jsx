@@ -55,6 +55,18 @@ export default function AdminLayout({ children }) {
       roles: ['admin', 'manager', 'staff']
     },
     {
+      path: '/admin/showtimes',
+      name: 'Showtimes',
+      icon: FaTicketAlt,
+      roles: ['admin', 'manager']
+    },
+    {
+      path: '/admin/movieshowtimes',
+      name: 'Movie Showtimes',
+      icon: FaFilm,
+      roles: ['admin', 'manager']
+    },
+    {
       path: '/admin/reports',
       name: 'Reports',
       icon: FaChartBar,

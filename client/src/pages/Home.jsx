@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faTheaterMasks, faStar, faThumbsUp, faFilm, faTv, faLanguage, faClock } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faTheaterMasks, faStar, faThumbsUp, faFilm, faTv, faLanguage, faClock, faSync } from '@fortawesome/free-solid-svg-icons';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -21,30 +21,69 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const { currentUser } = useSelector((state) => state.user);
 
   // Function to check if a showtime is still bookable
   const isShowtimeBookable = (showtime) => {
-    if (!showtime || !showtime.startTime) return false;
+    // First check if the showtime exists and has required properties
+    if (!showtime || !showtime.startTime || !showtime.endTime) {
+      console.log('Showtime invalid or missing required properties');
+      return false;
+    }
     
     const currentTime = new Date();
     
-    // startTime is already a complete Date object
+    // Get all relevant time data
     const showtimeStart = new Date(showtime.startTime);
-    
+    const showtimeEnd = new Date(showtime.endTime);
     const cutoffMinutes = showtime.cutoffMinutes || 5; // Default 5 minutes cutoff
     const cutoffTime = new Date(showtimeStart.getTime() - (cutoffMinutes * 60000));
     
-    // Debug logging
+    // Calculate time differences for better debugging
+    const minutesUntilStart = Math.floor((showtimeStart - currentTime) / (1000 * 60));
+    const minutesUntilEnd = Math.floor((showtimeEnd - currentTime) / (1000 * 60));
+    const minutesUntilCutoff = Math.floor((cutoffTime - currentTime) / (1000 * 60));
+    
+    // Debug logging with enhanced information
     console.log('Showtime check:', {
+      movieId: showtime.movieId?.name || showtime.movieId,
+      screen: showtime.screen,
       currentTime: currentTime.toLocaleString(),
       showtimeStart: showtimeStart.toLocaleString(),
+      showtimeEnd: showtimeEnd.toLocaleString(),
       cutoffTime: cutoffTime.toLocaleString(),
       isAfterCutoff: currentTime > cutoffTime,
       isAfterStart: currentTime > showtimeStart,
-      timeDifferenceMinutes: Math.floor((showtimeStart - currentTime) / (1000 * 60))
+      isAfterEnd: currentTime > showtimeEnd,
+      isArchived: showtime.isArchived,
+      minutesUntilStart,
+      minutesUntilEnd,
+      minutesUntilCutoff,
+      bookingAvailable: showtime.bookingAvailable
     });
+    
+    // If the backend already determined booking availability, use that value
+    if (showtime.hasOwnProperty('bookingAvailable')) {
+      const result = showtime.bookingAvailable === true;
+      console.log(`Using backend bookingAvailable value: ${result}`);
+      return result;
+    }
+    
+    // Otherwise, check all conditions manually
+    
+    // Check if showtime is archived
+    if (showtime.isArchived) {
+      console.log('Showtime is archived');
+      return false;
+    }
+    
+    // Check if showtime has already ended
+    if (currentTime > showtimeEnd) {
+      console.log('Showtime has already ended');
+      return false;
+    }
     
     // Check if showtime has already started
     if (currentTime > showtimeStart) {
@@ -65,6 +104,9 @@ const Home = () => {
   const getTimeUntilCutoff = (showtime) => {
     if (!showtime || !showtime.startTime) return null;
     
+    // First check if the showtime is bookable
+    if (!isShowtimeBookable(showtime)) return null;
+    
     const currentTime = new Date();
     
     // startTime is already a complete Date object
@@ -80,7 +122,11 @@ const Home = () => {
     const hours = Math.floor(timeDiff / (1000 * 60 * 60));
     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
     
-    if (hours > 0) {
+    // Also show seconds if less than 10 minutes remaining
+    if (hours === 0 && minutes < 10) {
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+      return `${minutes}m ${seconds}s`;
+    } else if (hours > 0) {
       return `${hours}h ${minutes}m`;
     } else {
       return `${minutes}m`;
@@ -94,23 +140,48 @@ const Home = () => {
         process.env.NODE_ENV === 'production' 
           ? 'https://cinematic-popcorn-theatre-experience-2.onrender.com' 
           : 'http://localhost:5000';
+      
+      // First, trigger archiving of past showtimes
+      console.log("Triggering archive check before fetching movies");
+      try {
+        await axios.post(`${backendUrl}/api/showtimes/force-archive`, {}, {
+          withCredentials: true,
+        });
+        console.log("Archive process completed");
+      } catch (archiveErr) {
+        console.error("Error running archive process:", archiveErr);
+        // Continue anyway to show available movies
+      }
           
+      // Now fetch the updated movie list
       const response = await axios.get(`${backendUrl}/api/movies`, {
         withCredentials: true,
       });
 
       // The response now includes movies with their showtimes
+      console.log(`Fetched ${response.data.length} movies`);
       setMovies(response.data);
       setError(null);
     } catch (err) {
+      console.error("Error fetching movies:", err);
       setError('Failed to fetch movies');
     } finally {
       setLoading(false);
     }
   };
-
+  
+  // Refresh data every minute to ensure showtimes are current
   useEffect(() => {
     fetchMovies();
+    
+    // Set up interval to refresh movies every minute
+    const intervalId = setInterval(() => {
+      console.log("Running scheduled refresh of movies");
+      fetchMovies();
+    }, 60000);
+    
+    // Clean up on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const showMovieDetails = (movie) => {
@@ -193,12 +264,33 @@ const Home = () => {
     );
   }
 
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await fetchMovies();
+    setTimeout(() => setRefreshing(false), 1000); // Show refresh animation for at least 1 second
+  };
+
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] p-6 font-poppins">
-      <h1 className="text-3xl lg:text-4xl font-playfair font-bold mb-12 text-center text-[#C8A951] tracking-wide flex items-center justify-center" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>
-        <FontAwesomeIcon icon={faTheaterMasks} className="mr-3 text-[#C8A951]" style={{filter: 'drop-shadow(0 0 5px rgba(200, 169, 81, 0.4))'}} />
-        Now Showing
-      </h1>
+      <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+        <h1 className="text-3xl lg:text-4xl font-playfair font-bold text-center text-[#C8A951] tracking-wide flex items-center justify-center" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>
+          <FontAwesomeIcon icon={faTheaterMasks} className="mr-3 text-[#C8A951]" style={{filter: 'drop-shadow(0 0 5px rgba(200, 169, 81, 0.4))'}} />
+          Now Showing
+        </h1>
+        
+        <button 
+          onClick={handleManualRefresh}
+          disabled={refreshing}
+          className={`mt-4 md:mt-0 px-4 py-2 flex items-center justify-center rounded border border-[#C8A951]/30 hover:border-[#C8A951] text-[#C8A951] transition-all duration-300 ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <FontAwesomeIcon 
+            icon={faSync} 
+            className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} 
+            style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.4))'}} 
+          />
+          {refreshing ? 'Refreshing...' : 'Refresh Showtimes'}
+        </button>
+      </div>
 
       {/* Display logged-in user's email */}
       {currentUser && (
@@ -344,9 +436,12 @@ const Home = () => {
                           <div className="w-2 h-2 rounded-full bg-red-500"></div>
                         </button>
                         <p className="text-red-400 text-sm font-poppins">
-                          {new Date() > new Date(showtime.startTime) 
-                            ? 'Show has started' 
-                            : 'Booking cutoff time passed'}
+                          {showtime ? (
+                            showtime.isArchived ? 'Show has been archived' :
+                            new Date() > new Date(showtime.endTime) ? 'Show has ended' :
+                            new Date() > new Date(showtime.startTime) ? 'Show has started' :
+                            'Booking cutoff time passed'
+                          ) : 'Not available for booking'}
                         </p>
                       </div>
                     );
