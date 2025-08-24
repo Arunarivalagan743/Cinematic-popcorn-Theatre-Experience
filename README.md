@@ -175,11 +175,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Arunarivalagan743](https://github.com/Arunarivalagan743)
 
-## 🙏 Acknowledgements
-
-- [React Documentation](https://react.dev/)
-- [MongoDB Documentation](https://www.mongodb.com/docs/)
-- [Node.js Documentation](https://nodejs.org/en/docs/)
-- [Express Documentation](https://expressjs.com/)
-- [Socket.IO Documentation](https://socket.io/docs/v4/)
-- [Stripe Documentation](https://stripe.com/docs)
