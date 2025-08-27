@@ -160,6 +160,26 @@ Default Admin Credentials:
 - **Email:** admin@cinexp.com
 - **Password:** CinAdmin2024!
 
+## 💳 Test Payment Information
+
+The application uses Stripe for secure payment processing. For testing purposes, use the following test card details:
+
+### Test Credit Card
+- **Card Number:** `4242 4242 4242 4242`
+- **Expiry Date:** Any future date (e.g., `12/34`)
+- **CVC:** Any 3 digits (e.g., `123`)
+- **Cardholder Name:** Any name
+- **ZIP Code:** Any valid ZIP code
+
+### Additional Test Cards
+- **Visa:** `4242 4242 4242 4242`
+- **Visa (debit):** `4000 0566 5566 5556`
+- **Mastercard:** `5555 5555 5555 4444`
+- **American Express:** `3782 822463 10005`
+- **Declined Card:** `4000 0000 0000 0002`
+
+> 💡 **Note:** This is a test environment. No real charges will be made and no real payment processing occurs.
+
 ## 🌐 Deployment
 
 The application is deployed using Vercel:

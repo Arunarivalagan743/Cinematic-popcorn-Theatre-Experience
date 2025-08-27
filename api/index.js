@@ -21,6 +21,7 @@ import seatRoutes from './routes/seat.route.js';
 import parkingRoutes from './routes/parking.route.js';
 import seatGeneratorRoutes from './routes/seatGenerator.route.js';
 import adminRoutes from './routes/admin.route.js';
+import stripeRoutes from './routes/stripe.route.js';
 
 // Models
 import Showtime from './models/showtime.model.js';
@@ -131,6 +132,7 @@ app.use('/api/seats', seatRoutes);
 app.use('/api/parking', parkingRoutes);
 app.use('/api/seat-generator', seatGeneratorRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 // Schedule jobs
 // Release expired holds and check for past showtimes every minute
@@ -197,10 +199,70 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
+// Generate next day showtimes daily at midnight
+cron.schedule('0 0 * * *', async () => {
+  try {
+    console.log(`Running daily showtime generation at ${new Date().toISOString()}`);
+    const generatedCount = await generateNextDayShowtimes();
+    
+    if (generatedCount > 0) {
+      console.log(`Daily cron job generated ${generatedCount} new showtimes`);
+      // Notify clients about new showtimes
+      io.emit('showtimesUpdated', { 
+        message: 'New showtimes have been generated',
+        count: generatedCount,
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    console.error('Error in daily showtime generation:', error);
+  }
+});
+
+// Check for missing showtimes every 6 hours and generate if needed
+cron.schedule('0 */6 * * *', async () => {
+  try {
+    console.log(`Running 6-hourly showtime check at ${new Date().toISOString()}`);
+    
+    // Check if we have showtimes for tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const Showtime = mongoose.model('Showtime');
+    const tomorrowShowtimes = await Showtime.find({
+      date: {
+        $gte: tomorrow,
+        $lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+      },
+      isArchived: false
+    });
+    
+    if (tomorrowShowtimes.length === 0) {
+      console.log('No showtimes found for tomorrow during 6-hourly check. Generating...');
+      const generatedCount = await generateNextDayShowtimes();
+      console.log(`6-hourly check generated ${generatedCount} new showtimes`);
+      
+      if (generatedCount > 0) {
+        io.emit('showtimesUpdated', { 
+          message: 'Missing showtimes have been generated',
+          count: generatedCount,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } else {
+      console.log(`6-hourly check found ${tomorrowShowtimes.length} showtimes for tomorrow. No generation needed.`);
+    }
+  } catch (error) {
+    console.error('Error in 6-hourly showtime check:', error);
+  }
+});
+
 // Check and generate next day's showtimes every 30 minutes
 cron.schedule('*/30 * * * *', async () => {
   try {
     console.log('Checking if next day showtimes need to be generated...');
+    
     // Get tomorrow's date
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -211,13 +273,30 @@ cron.schedule('*/30 * * * *', async () => {
       date: {
         $gte: tomorrow,
         $lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
-      }
+      },
+      isArchived: false
     });
+    
+    // Also check if we have any active movies
+    const activeMovies = await mongoose.model('Movie').find();
+    
+    if (activeMovies.length === 0) {
+      console.log('No active movies found. Cannot generate showtimes.');
+      return;
+    }
     
     if (tomorrowShowtimes.length === 0) {
       console.log('No showtimes found for tomorrow. Generating new showtimes...');
       const count = await generateNextDayShowtimes();
       console.log(`Generated ${count} showtimes for tomorrow.`);
+      
+      // Notify clients about new showtimes
+      io.emit('showtimesUpdated', { 
+        message: `Generated ${count} new showtimes for tomorrow`,
+        count,
+        date: tomorrow.toISOString(),
+        timestamp: new Date().toISOString()
+      });
     } else {
       console.log(`Already have ${tomorrowShowtimes.length} showtimes for tomorrow. Skipping generation.`);
     }

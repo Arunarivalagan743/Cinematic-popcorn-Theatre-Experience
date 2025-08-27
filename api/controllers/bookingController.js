@@ -20,7 +20,9 @@ export const createBooking = async (req, res) => {
       seatIds, 
       parkingSlotIds, 
       totalCost, 
-      phone 
+      phone,
+      paymentIntentId,
+      paymentMethod = 'demo'
     } = req.body;
     
     if (!movieId || !showtimeId || !userId || !seatIds || !totalCost) {
@@ -176,7 +178,9 @@ export const createBooking = async (req, res) => {
       parkingSlots: parkingSlotIds,
       totalCost,
       phone: phone || null,
-      paymentStatus: 'COMPLETED' // Assuming payment is already completed
+      paymentStatus: 'COMPLETED', // Assuming payment is already completed
+      paymentMethod,
+      paymentIntentId: paymentIntentId || null
     });
     
     // Save the booking

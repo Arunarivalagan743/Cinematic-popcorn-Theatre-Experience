@@ -44,6 +44,11 @@ const bookingSchema = new mongoose.Schema({
     type: String, 
     default: null 
   },
+  // Stripe Payment Intent ID
+  paymentIntentId: {
+    type: String,
+    default: null
+  },
   orderId: {
     type: String,
     default: null

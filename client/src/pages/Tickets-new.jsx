@@ -490,8 +490,8 @@ const Tickets = () => {
       totalCost
     };
     
-    // Navigate to payment page with booking data
-    navigate('/payment-new', { 
+    // Navigate to payment method selection page with booking data
+    navigate('/payment-method', { 
       state: { 
         bookingData,
         movieDetails: movieData,

@@ -19,7 +19,12 @@ import TermsConditions from './pages/TermsConditions';
 import CancellationRefund from './pages/CancellationRefund';
 
 import PaymentNew from './pages/payment-new';
-import { useEffect } from 'react';
+import StripePayment from './pages/StripePayment';
+import StripeTestPage from './pages/StripeTestPage';
+import PaymentMethodSelection from './pages/PaymentMethodSelection';
+import { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { signOut } from './redux/user/userSlice';
 import { connectSocket, disconnectSocket } from './services/socketService';
 import { setupTokenRefreshInterceptor } from './utils/tokenRefresher';
 
@@ -34,6 +39,70 @@ import ShowtimesManagement from './pages/admin/ShowtimesManagement';
 import MovieShowtimeManagement from './pages/admin/MovieShowtimeManagement';
 
 export default function App() {
+  const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const [skipSessionValidation, setSkipSessionValidation] = useState(false);
+
+  // Listen for sign-in events to skip immediate validation
+  useEffect(() => {
+    const handleSignIn = () => {
+      setSkipSessionValidation(true);
+      // Re-enable validation after 10 seconds
+      setTimeout(() => setSkipSessionValidation(false), 10000);
+    };
+
+    // Listen for successful sign-ins
+    if (currentUser && !skipSessionValidation) {
+      handleSignIn();
+    }
+  }, [currentUser]);
+
+  // Validate session on app load
+  useEffect(() => {
+    const validateSession = async () => {
+      if (currentUser && !skipSessionValidation) {
+        try {
+          console.log('🔍 Validating session for user:', currentUser.username);
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+          const response = await fetch(`${backendUrl}/api/auth/validate-session`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (!data.valid) {
+            console.log('🔄 Session invalid, clearing user state');
+            dispatch(signOut());
+          } else {
+            console.log('✅ Session valid, user authenticated');
+          }
+        } catch (error) {
+          console.error('❌ Session validation failed:', error);
+          // Only sign out for 401/403 errors, not network issues
+          if (error.message.includes('401') || error.message.includes('403')) {
+            console.log('🔄 Authentication error, clearing user state');
+            dispatch(signOut());
+          }
+        }
+      }
+    };
+
+    // Only validate session if user has been in Redux state for more than 5 seconds
+    // This prevents immediate validation after sign-in
+    if (currentUser && !skipSessionValidation) {
+      const timer = setTimeout(validateSession, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser, dispatch, skipSessionValidation]);
+
   // Initialize and clean up socket connection
   useEffect(() => {
     // Connect to socket server on app load
@@ -55,6 +124,7 @@ export default function App() {
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/debug' element={<DebugPage />} />
+          <Route path='/stripe-test' element={<StripeTestPage />} />
           <Route path='/about' element={<About />} />
           <Route path='/contact' element={<Contact />} />
           <Route path='/pricing' element={<Pricing />} />
@@ -64,7 +134,13 @@ export default function App() {
           
           {/* New real-time routes (prioritized) */}
           <Route path="/tickets/:movieId/:showtimeId" element={<TicketsNew />} />
-          <Route path='/payment-new' element={<PaymentNew />} />
+          
+          {/* Protected payment routes */}
+          <Route element={<PrivateRoute />}>
+            <Route path='/payment-method' element={<PaymentMethodSelection />} />
+            <Route path='/payment-new' element={<PaymentNew />} />
+            <Route path='/stripe-payment' element={<StripePayment />} />
+          </Route>
           
           {/* Legacy routes (fallback) */}
 

@@ -422,6 +422,21 @@ const Payment = () => {
                   disabled={isSubmitting}
                 />
               </div>
+              
+              {/* Test Information */}
+              <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                <div className="text-blue-300 text-sm font-medium mb-2">
+                  <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
+                  Test Payment Information
+                </div>
+                <div className="text-blue-200 text-xs space-y-1">
+                  <div><strong>Card Number:</strong> 4242 4242 4242 4242 (or any number shown above)</div>
+                  <div><strong>Expiry:</strong> Any future date (e.g., 12/34)</div>
+                  <div><strong>CVC:</strong> Any 3 digits (e.g., 123)</div>
+                  <div><strong>Name:</strong> Any name</div>
+                  <div className="text-blue-300 mt-2 italic">💡 This is a demo - no real payment will be processed</div>
+                </div>
+              </div>
             </div>
           </div>
           
