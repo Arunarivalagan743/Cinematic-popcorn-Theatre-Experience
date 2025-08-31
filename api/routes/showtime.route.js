@@ -8,6 +8,7 @@ import {
   generateTodayShowtimes,
   forceArchivePastShowtimes,
   generateNextDayShowtimes,
+  reopenAllShowtimes,
   updateShowtime,
   deleteShowtime
 } from '../controllers/showtime.controller.js';
@@ -65,6 +66,20 @@ router.post('/generate-next-day', verifyToken, async (req, res) => {
   }
 });
 
+// Manually reopen all archived showtimes
+router.post('/reopen-all', verifyToken, async (req, res) => {
+  try {
+    const count = await reopenAllShowtimes();
+    res.status(200).json({
+      message: `Successfully reopened ${count} archived showtimes`,
+      count
+    });
+  } catch (error) {
+    console.error('Error reopening archived showtimes:', error);
+    res.status(500).json({ message: 'Error reopening showtimes', error: error.message });
+  }
+});
+
 // Emergency fix endpoint (no auth required for testing)
 router.post('/emergency-generate', async (req, res) => {
   try {
@@ -95,14 +110,18 @@ router.post('/quick-fix', async (req, res) => {
       startTime: { $gt: new Date('2025-12-31') }
     });
     
+    // Reopen all archived showtimes
+    const reopenedCount = await reopenAllShowtimes();
+    
     // Generate new showtimes for today and tomorrow
     const todayCount = await generateTodayShowtimes();
     const tomorrowCount = await generateNextDayShowtimes();
     
     res.status(200).json({
-      message: 'Quick fix completed',
+      message: 'Quick fix completed with reopening',
       totalShowtimes: allShowtimes.length,
       archivedCount: archiveResult.modifiedCount,
+      reopenedCount: reopenedCount,
       deletedFutureCount: futureDeleteResult.deletedCount,
       generatedToday: todayCount,
       generatedTomorrow: tomorrowCount,

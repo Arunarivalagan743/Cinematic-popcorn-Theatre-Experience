@@ -174,6 +174,20 @@ const Tickets = () => {
 
   // Initial data loading
   useEffect(() => {
+    // Check if user is logged in
+    if (!currentUser) {
+      console.error('User not authenticated');
+      Swal.fire({
+        title: 'Authentication Required',
+        text: 'You need to be logged in to book tickets. Please sign in and try again.',
+        icon: 'warning',
+        confirmButtonText: 'Sign In'
+      }).then(() => {
+        navigate('/sign-in');
+      });
+      return;
+    }
+    
     // Check for valid params
     if (!movieId || !showtimeId || movieId === 'undefined' || showtimeId === 'undefined') {
       console.error('Invalid movieId or showtimeId', { movieId, showtimeId });
@@ -217,7 +231,7 @@ const Tickets = () => {
       // Leave the showtime room
       leaveShowtimeRoom(showtimeId);
     };
-  }, [movieId, showtimeId]);
+  }, [movieId, showtimeId, currentUser]);
   
   // Join showtime room when data is loaded
   useEffect(() => {
@@ -276,6 +290,19 @@ const Tickets = () => {
       
     } catch (err) {
       console.error('Error fetching data:', err);
+      
+      // Handle authentication errors
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        Swal.fire({
+          title: 'Session Expired',
+          text: 'Your session has expired. Please sign in again to continue booking.',
+          icon: 'warning',
+          confirmButtonText: 'Sign In'
+        }).then(() => {
+          navigate('/sign-in');
+        });
+        return;
+      }
       
       // Determine the specific error message
       let errorMessage = 'An error occurred while fetching data.';

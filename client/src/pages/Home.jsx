@@ -160,7 +160,59 @@ const Home = () => {
 
       // The response now includes movies with their showtimes
       console.log(`Fetched ${response.data.length} movies`);
-      setMovies(response.data);
+      
+      // Filter movies to only include those with available (non-archived) showtimes
+      const moviesWithShowtimes = response.data.filter(movie => {
+        if (!movie.showtimes || movie.showtimes.length === 0) {
+          console.log(`Movie ${movie.name} has no showtimes`);
+          return false;
+        }
+        
+        // Check if movie has any valid showtimes (non-archived and available for booking)
+        const validShowtimes = movie.showtimes.filter(showtime => {
+          const isValid = !showtime.isArchived && isShowtimeBookable(showtime);
+          if (!isValid) {
+            console.log(`Filtering out showtime for ${movie.name}: archived=${showtime.isArchived}, available=${isShowtimeBookable(showtime)}`);
+          }
+          return isValid;
+        });
+        
+        console.log(`Movie ${movie.name} has ${validShowtimes.length} valid showtimes out of ${movie.showtimes.length} total`);
+        return validShowtimes.length > 0;
+      });
+      
+      console.log(`Movies with available showtimes: ${moviesWithShowtimes.length}`);
+      
+      // If no movies have showtimes, try to reopen archived ones
+      if (moviesWithShowtimes.length === 0 && response.data.length > 0) {
+        console.log("No movies with available showtimes found. Attempting to reopen archived showtimes...");
+        try {
+          const reopenResponse = await axios.post(`${backendUrl}/api/showtimes/reopen-all`, {}, {
+            withCredentials: true,
+          });
+          
+          if (reopenResponse.data && reopenResponse.data.count > 0) {
+            console.log(`Reopened ${reopenResponse.data.count} archived showtimes. Refetching movies...`);
+            
+            // Refetch movies after reopening
+            const refetchResponse = await axios.get(`${backendUrl}/api/movies`, {
+              withCredentials: true,
+            });
+            
+            console.log(`After reopening: Fetched ${refetchResponse.data.length} movies`);
+            setMovies(refetchResponse.data);
+          } else {
+            console.log("No archived showtimes found to reopen");
+            setMovies(response.data);
+          }
+        } catch (reopenErr) {
+          console.error("Error reopening archived showtimes:", reopenErr);
+          setMovies(response.data);
+        }
+      } else {
+        setMovies(response.data);
+      }
+      
       setError(null);
     } catch (err) {
       console.error("Error fetching movies:", err);
@@ -234,9 +286,24 @@ const Home = () => {
     });
   };
 
-  const filteredMovies = movies.filter((movie) =>
-    movie.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMovies = movies
+    .filter((movie) => {
+      // First filter: Only show movies with valid (non-archived) showtimes
+      if (!movie.showtimes || movie.showtimes.length === 0) {
+        return false;
+      }
+      
+      // Check if movie has any valid showtimes (non-archived and available for booking)
+      const validShowtimes = movie.showtimes.filter(showtime => 
+        !showtime.isArchived && isShowtimeBookable(showtime)
+      );
+      
+      return validShowtimes.length > 0;
+    })
+    .filter((movie) => 
+      // Second filter: Search query
+      movie.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   const fontFamily = 'font-sans';
 
@@ -349,21 +416,27 @@ const Home = () => {
               </p>
               
               {/* Show screen and timing from showtimes if available */}
-              {movie.showtimes && movie.showtimes.length > 0 && movie.showtimes[0] && 
-                typeof movie.showtimes[0] === 'object' ? (
+              {(() => {
+                // Get the first valid (non-archived and bookable) showtime
+                const validShowtimes = movie.showtimes?.filter(showtime => 
+                  !showtime.isArchived && isShowtimeBookable(showtime)
+                );
+                const firstValidShowtime = validShowtimes?.[0];
+                
+                return firstValidShowtime && typeof firstValidShowtime === 'object' ? (
                 <div className="space-y-2">
                   <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
                     <FontAwesomeIcon icon={faTv} className="text-[#C8A951]" />
-                    Screen: <span className="font-semibold">{movie.showtimes[0].screen}</span>
+                    Screen: <span className="font-semibold">{firstValidShowtime.screen}</span>
                   </p>
                   <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
                     <FontAwesomeIcon icon={faClock} className="text-[#C8A951]" />
                     Show Time: <span className="font-semibold">
-                      {new Date(movie.showtimes[0].startTime).toLocaleTimeString('en-US', {
+                      {new Date(firstValidShowtime.startTime).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true
-                      })} - {new Date(movie.showtimes[0].endTime).toLocaleTimeString('en-US', {
+                      })} - {new Date(firstValidShowtime.endTime).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true
@@ -381,15 +454,15 @@ const Home = () => {
                     <span className="text-base md:text-lg font-medium text-[#F5F5F5]">
                       Time Slot: 
                       <span className={`font-semibold ml-1 px-2 py-1 rounded-md text-sm ${
-                        movie.showtimes[0].screen === 'Screen 1' 
+                        firstValidShowtime.screen === 'Screen 1' 
                           ? 'bg-yellow-600/20 text-yellow-300' // Morning
-                          : movie.showtimes[0].screen === 'Screen 2'
+                          : firstValidShowtime.screen === 'Screen 2'
                           ? 'bg-orange-600/20 text-orange-300' // Afternoon
                           : 'bg-purple-600/20 text-purple-300' // Night
                       }`}>
-                        {movie.showtimes[0].screen === 'Screen 1' 
+                        {firstValidShowtime.screen === 'Screen 1' 
                           ? '🌅 Morning Show' 
-                          : movie.showtimes[0].screen === 'Screen 2'
+                          : firstValidShowtime.screen === 'Screen 2'
                           ? '🌞 Afternoon Show'
                           : '🌙 Night Show'
                         }
@@ -413,17 +486,36 @@ const Home = () => {
                     Language: <span className="font-semibold">{movie.language}</span>
                   </p>
                 </div>
-              )}
+              );
+              })()}
             </div>
 
             <div className="px-5 pb-5 text-center flex flex-col gap-3">
               {/* Primary: Real-time booking button with cutoff validation */}
-              {movie.showtimes && movie.showtimes.length > 0 && movie.showtimes[0] && 
-                (typeof movie.showtimes[0] === 'object' ? movie.showtimes[0]._id : movie.showtimes[0]) ? (
-                (() => {
-                  const showtime = typeof movie.showtimes[0] === 'object' ? movie.showtimes[0] : null;
-                  const isBookable = showtime ? isShowtimeBookable(showtime) : true; // Fallback to true for legacy data
-                  const timeRemaining = showtime ? getTimeUntilCutoff(showtime) : null;
+              {(() => {
+                // Get the first valid (non-archived and bookable) showtime
+                const validShowtimes = movie.showtimes?.filter(showtime => 
+                  !showtime.isArchived && isShowtimeBookable(showtime)
+                );
+                const firstValidShowtime = validShowtimes?.[0];
+                
+                if (!firstValidShowtime) {
+                  return (
+                    <div className="space-y-2">
+                      <button
+                        className="bg-gray-600 border-2 border-gray-500 text-gray-300 font-playfair font-semibold py-3 px-6 cursor-not-allowed w-full flex items-center justify-center"
+                        disabled
+                      >
+                        <span className="mr-2">No Available Showtimes</span>
+                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      </button>
+                    </div>
+                  );
+                }
+                
+                const showtimeId = firstValidShowtime._id;
+                const isBookable = isShowtimeBookable(firstValidShowtime);
+                const timeRemaining = getTimeUntilCutoff(firstValidShowtime);
                   
                   if (!isBookable) {
                     return (
@@ -436,10 +528,10 @@ const Home = () => {
                           <div className="w-2 h-2 rounded-full bg-red-500"></div>
                         </button>
                         <p className="text-red-400 text-sm font-poppins">
-                          {showtime ? (
-                            showtime.isArchived ? 'Show has been archived' :
-                            new Date() > new Date(showtime.endTime) ? 'Show has ended' :
-                            new Date() > new Date(showtime.startTime) ? 'Show has started' :
+                          {firstValidShowtime ? (
+                            firstValidShowtime.isArchived ? 'Show has been archived' :
+                            new Date() > new Date(firstValidShowtime.endTime) ? 'Show has ended' :
+                            new Date() > new Date(firstValidShowtime.startTime) ? 'Show has started' :
                             'Booking cutoff time passed'
                           ) : 'Not available for booking'}
                         </p>
@@ -449,8 +541,7 @@ const Home = () => {
                   
                   return (
                     <div className="space-y-2">
-                      <Link to={`/tickets/${movie._id}/${typeof movie.showtimes[0] === 'object' ? 
-                        movie.showtimes[0]._id : movie.showtimes[0]}`}>
+                      <Link to={`/tickets/${movie._id}/${showtimeId}`}>
                         <button
                           className="bg-[#0D0D0D] border-2 border-[#C8A951] text-[#F5F5F5] font-playfair font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg w-full flex items-center justify-center"
                           style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
@@ -466,23 +557,7 @@ const Home = () => {
                       )}
                     </div>
                   );
-                })()
-              ) : (
-                /* Fallback: Legacy booking button when showtimes aren't available */
-                <div className="flex flex-col gap-3">
-                  <p className="text-yellow-500 text-sm font-poppins">
-                    Real-time booking not available for this movie
-                  </p>
-                  <Link to={`/tickets/${movie.name}/${movie.screen}/${movie.timing}`}>
-                    <button
-                      className="bg-[#0D0D0D] border border-[#C8A951]/50 text-[#F5F5F5] font-playfair font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg w-full"
-                      style={{boxShadow: '0 0 10px rgba(200, 169, 81, 0.1)'}}
-                    >
-                      Book Now (Legacy)
-                    </button>
-                  </Link>
-                </div>
-              )}
+              })()}
             </div>
           </div>
         ))}

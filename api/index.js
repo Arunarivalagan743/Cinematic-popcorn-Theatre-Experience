@@ -27,7 +27,7 @@ import stripeRoutes from './routes/stripe.route.js';
 import Showtime from './models/showtime.model.js';
 
 // Controllers for scheduled tasks
-import { archivePastShowtimes, generateNextDayShowtimes } from './controllers/showtime.controller.js';
+import { archivePastShowtimes, generateNextDayShowtimes, reopenAllShowtimes } from './controllers/showtime.controller.js';
 import { releaseExpiredHolds } from './controllers/seat.controller.js';
 import { releaseExpiredParkingHolds } from './controllers/parking.controller.js';
 
@@ -199,23 +199,86 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
-// Generate next day showtimes daily at midnight
+// Generate next day showtimes daily at midnight and reopen all archived showtimes
 cron.schedule('0 0 * * *', async () => {
   try {
-    console.log(`Running daily showtime generation at ${new Date().toISOString()}`);
-    const generatedCount = await generateNextDayShowtimes();
+    console.log(`Running daily showtime management at ${new Date().toISOString()}`);
     
-    if (generatedCount > 0) {
-      console.log(`Daily cron job generated ${generatedCount} new showtimes`);
-      // Notify clients about new showtimes
+    // Step 1: Reopen all archived showtimes for the new day
+    console.log('Step 1: Reopening all archived showtimes...');
+    const reopenedCount = await reopenAllShowtimes();
+    console.log(`Daily cron job reopened ${reopenedCount} archived showtimes`);
+    
+    // Step 2: Check if we have enough showtimes for today and tomorrow
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Check today's showtimes
+    const todayShowtimes = await Showtime.find({
+      date: {
+        $gte: today,
+        $lt: tomorrow
+      },
+      isArchived: false
+    });
+    
+    // Check tomorrow's showtimes
+    const tomorrowShowtimes = await Showtime.find({
+      date: {
+        $gte: tomorrow,
+        $lt: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+      },
+      isArchived: false
+    });
+    
+    console.log(`Found ${todayShowtimes.length} unarchived showtimes for today`);
+    console.log(`Found ${tomorrowShowtimes.length} unarchived showtimes for tomorrow`);
+    
+    // Step 3: Generate new showtimes for tomorrow if needed
+    let generatedCount = 0;
+    if (tomorrowShowtimes.length === 0) {
+      console.log('Step 3: Generating new showtimes for tomorrow...');
+      generatedCount = await generateNextDayShowtimes();
+      console.log(`Generated ${generatedCount} new showtimes for tomorrow`);
+    } else {
+      console.log('Step 3: Tomorrow already has showtimes, skipping generation');
+    }
+    
+    // Step 4: Notify clients about the changes
+    if (generatedCount > 0 || reopenedCount > 0) {
+      console.log(`Daily cron job completed successfully:`);
+      console.log(`- Reopened: ${reopenedCount} archived showtimes`);
+      console.log(`- Generated: ${generatedCount} new showtimes`);
+      console.log(`- Today's available showtimes: ${todayShowtimes.length + reopenedCount}`);
+      console.log(`- Tomorrow's available showtimes: ${tomorrowShowtimes.length + generatedCount}`);
+      
+      // Notify all connected clients about the updates
       io.emit('showtimesUpdated', { 
-        message: 'New showtimes have been generated',
-        count: generatedCount,
+        message: 'Daily showtime management completed - showtimes have been refreshed',
+        reopenedCount: reopenedCount,
+        generatedCount: generatedCount,
+        todayCount: todayShowtimes.length + reopenedCount,
+        tomorrowCount: tomorrowShowtimes.length + generatedCount,
         timestamp: new Date().toISOString()
       });
+    } else {
+      console.log('Daily cron job completed - no changes needed');
     }
+    
   } catch (error) {
-    console.error('Error in daily showtime generation:', error);
+    console.error('Error in daily showtime management:', error);
+    // Try to notify about the error
+    try {
+      io.emit('showtimesUpdated', {
+        message: 'Error in daily showtime management',
+        error: true,
+        timestamp: new Date().toISOString()
+      });
+    } catch (notifyError) {
+      console.error('Failed to notify clients about error:', notifyError);
+    }
   }
 });
 
@@ -258,17 +321,55 @@ cron.schedule('0 */6 * * *', async () => {
   }
 });
 
-// Check and generate next day's showtimes every 30 minutes
+// Backup check every 30 minutes to ensure showtimes are available
 cron.schedule('*/30 * * * *', async () => {
   try {
-    console.log('Checking if next day showtimes need to be generated...');
+    console.log('Running 30-minute backup check for showtime availability...');
     
-    // Get tomorrow's date
-    const tomorrow = new Date();
+    const currentDate = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
     
-    // Check if we already have showtimes for tomorrow
+    // Check if we have any active, unarchived showtimes for today
+    const todayActiveShowtimes = await Showtime.find({
+      date: {
+        $gte: today,
+        $lt: tomorrow
+      },
+      isArchived: false,
+      startTime: { $gt: currentDate } // Only future showtimes
+    });
+    
+    // Check if we have movies but no available showtimes
+    const Movie = (await import('./models/movie.model.js')).default;
+    const activeMovies = await Movie.find({ isActive: true });
+    
+    console.log(`Backup check: Found ${activeMovies.length} active movies and ${todayActiveShowtimes.length} available showtimes for today`);
+    
+    // If we have movies but no available showtimes, try to reopen archived ones
+    if (activeMovies.length > 0 && todayActiveShowtimes.length === 0) {
+      console.log('No available showtimes found for active movies. Attempting emergency reopening...');
+      
+      const reopenedCount = await reopenAllShowtimes();
+      
+      if (reopenedCount > 0) {
+        console.log(`Emergency backup: Reopened ${reopenedCount} archived showtimes`);
+        
+        // Notify clients about the emergency reopening
+        io.emit('showtimesUpdated', {
+          message: 'Emergency reopening: Showtimes have been made available',
+          reopenedCount: reopenedCount,
+          emergencyReopen: true,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log('No archived showtimes available for reopening. This may require admin attention.');
+      }
+    }
+    
+    // Also check for tomorrow's showtimes
     const tomorrowShowtimes = await Showtime.find({
       date: {
         $gte: tomorrow,
@@ -277,31 +378,17 @@ cron.schedule('*/30 * * * *', async () => {
       isArchived: false
     });
     
-    // Also check if we have any active movies
-    const activeMovies = await mongoose.model('Movie').find();
-    
-    if (activeMovies.length === 0) {
-      console.log('No active movies found. Cannot generate showtimes.');
-      return;
-    }
-    
-    if (tomorrowShowtimes.length === 0) {
-      console.log('No showtimes found for tomorrow. Generating new showtimes...');
-      const count = await generateNextDayShowtimes();
-      console.log(`Generated ${count} showtimes for tomorrow.`);
+    if (activeMovies.length > 0 && tomorrowShowtimes.length === 0) {
+      console.log('No showtimes found for tomorrow. Generating new ones...');
+      const generatedCount = await generateNextDayShowtimes();
       
-      // Notify clients about new showtimes
-      io.emit('showtimesUpdated', { 
-        message: `Generated ${count} new showtimes for tomorrow`,
-        count,
-        date: tomorrow.toISOString(),
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      console.log(`Already have ${tomorrowShowtimes.length} showtimes for tomorrow. Skipping generation.`);
+      if (generatedCount > 0) {
+        console.log(`Backup check generated ${generatedCount} showtimes for tomorrow`);
+      }
     }
+    
   } catch (error) {
-    console.error('Error checking/generating next day showtimes:', error);
+    console.error('Error in 30-minute backup check:', error);
   }
 });
 

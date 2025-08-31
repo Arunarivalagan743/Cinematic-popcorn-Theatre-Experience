@@ -59,6 +59,11 @@ export const getAllMovies = async (req, res) => {
       
       // Process and filter showtimes
       const validShowtimes = allShowtimes.filter(showtime => {
+        // Skip archived showtimes completely
+        if (showtime.isArchived) {
+          return false;
+        }
+        
         const showtimeStart = new Date(showtime.startTime);
         const showtimeEnd = new Date(showtime.endTime);
         const cutoffTime = new Date(showtimeStart.getTime() - (showtime.cutoffMinutes * 60000));
@@ -96,10 +101,11 @@ export const getAllMovies = async (req, res) => {
         }
         
         // Only include showtimes that:
-        // 1. Have not ended
-        // 2. Have not started
-        // 3. Are still within the booking window (cutoff time)
-        return !isAfterEnd && !isAfterStart && !isAfterCutoff;
+        // 1. Are not archived
+        // 2. Have not ended
+        // 3. Have not started
+        // 4. Are still within the booking window (cutoff time)
+        return !showtime.isArchived && !isAfterEnd && !isAfterStart && !isAfterCutoff;
       });
       
       return {

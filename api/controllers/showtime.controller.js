@@ -388,6 +388,39 @@ export const deleteShowtime = async (req, res) => {
   }
 };
 
+// Reopen all archived showtimes for the new day
+export const reopenAllShowtimes = async () => {
+  try {
+    console.log('Starting to reopen all archived showtimes...');
+    
+    // Get current date
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+    
+    // Find all archived showtimes
+    const archivedShowtimes = await Showtime.find({ isArchived: true });
+    
+    if (archivedShowtimes.length === 0) {
+      console.log('No archived showtimes found to reopen.');
+      return 0;
+    }
+    
+    console.log(`Found ${archivedShowtimes.length} archived showtimes. Reopening all...`);
+    
+    // Reopen all archived showtimes by setting isArchived to false
+    const result = await Showtime.updateMany(
+      { isArchived: true },
+      { $set: { isArchived: false } }
+    );
+    
+    console.log(`Successfully reopened ${result.modifiedCount} showtimes at ${currentDate.toISOString()}`);
+    return result.modifiedCount;
+  } catch (error) {
+    console.error('Error reopening archived showtimes:', error);
+    throw error;
+  }
+};
+
 // Generate showtimes for the next day
 export const generateNextDayShowtimes = async () => {
   try {

@@ -63,8 +63,7 @@ export default function App() {
       if (currentUser && !skipSessionValidation) {
         try {
           console.log('🔍 Validating session for user:', currentUser.username);
-          const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-          const response = await fetch(`${backendUrl}/api/auth/validate-session`, {
+          const response = await fetch('/api/auth/validate-session', {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -86,10 +85,12 @@ export default function App() {
           }
         } catch (error) {
           console.error('❌ Session validation failed:', error);
-          // Only sign out for 401/403 errors, not network issues
+          // Only sign out for specific authentication errors, not network issues
           if (error.message.includes('401') || error.message.includes('403')) {
             console.log('🔄 Authentication error, clearing user state');
             dispatch(signOut());
+          } else {
+            console.log('🔄 Network error during session validation, keeping user logged in');
           }
         }
       }
@@ -132,11 +133,9 @@ export default function App() {
           <Route path='/terms-conditions' element={<TermsConditions />} />
           <Route path='/cancellation-refund' element={<CancellationRefund />} />
           
-          {/* New real-time routes (prioritized) */}
-          <Route path="/tickets/:movieId/:showtimeId" element={<TicketsNew />} />
-          
-          {/* Protected payment routes */}
+          {/* Protected booking and payment routes */}
           <Route element={<PrivateRoute />}>
+            <Route path="/tickets/:movieId/:showtimeId" element={<TicketsNew />} />
             <Route path='/payment-method' element={<PaymentMethodSelection />} />
             <Route path='/payment-new' element={<PaymentNew />} />
             <Route path='/stripe-payment' element={<StripePayment />} />

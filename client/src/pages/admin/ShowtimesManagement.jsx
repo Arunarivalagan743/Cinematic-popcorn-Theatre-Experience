@@ -12,12 +12,14 @@ export default function ShowtimesManagement() {
   const [loading, setLoading] = useState({
     archiving: false,
     generating: false,
-    nextDay: false
+    nextDay: false,
+    reopening: false
   });
   const [results, setResults] = useState({
     archiving: null,
     generating: null,
-    nextDay: null
+    nextDay: null,
+    reopening: null
   });
 
   const handleArchivePastShowtimes = async () => {
@@ -104,6 +106,34 @@ export default function ShowtimesManagement() {
     }
   };
 
+  const handleReopenAllShowtimes = async () => {
+    if (loading.reopening) return;
+    
+    try {
+      setLoading(prev => ({ ...prev, reopening: true }));
+      const res = await fetch(`${backendUrl}/api/showtimes/reopen-all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        toast.success(`Successfully reopened ${data.count} archived showtimes`);
+        setResults(prev => ({ ...prev, reopening: data }));
+      } else {
+        toast.error(data.message || 'Error reopening showtimes');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to reopen showtimes');
+    } finally {
+      setLoading(prev => ({ ...prev, reopening: false }));
+    }
+  };
+
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center">Showtimes Management</h1>
@@ -128,6 +158,27 @@ export default function ShowtimesManagement() {
               <p>Archived: {results.archiving.count} showtimes</p>
               {results.archiving.seats && <p>Freed seats: {results.archiving.seats}</p>}
               {results.archiving.parking && <p>Freed parking: {results.archiving.parking}</p>}
+            </div>
+          )}
+        </div>
+        
+        {/* Reopen All Showtimes Card */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4">Reopen All Showtimes</h2>
+          <p className="text-gray-600 mb-4">
+            Reopen all archived showtimes to make them available for booking again.
+          </p>
+          <button 
+            onClick={handleReopenAllShowtimes}
+            disabled={loading.reopening}
+            className="w-full bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700 disabled:bg-gray-400"
+          >
+            {loading.reopening ? 'Processing...' : 'Reopen All Showtimes'}
+          </button>
+          
+          {results.reopening && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-md">
+              <p>Reopened: {results.reopening.count} showtimes</p>
             </div>
           )}
         </div>
@@ -179,9 +230,11 @@ export default function ShowtimesManagement() {
         <h3 className="font-semibold mb-2">How This Works</h3>
         <ul className="list-disc pl-5 text-sm text-gray-700">
           <li>The system automatically archives past showtimes via a scheduled task that runs every minute</li>
-          <li>New showtimes for the next day are automatically generated at 1:00 AM every day</li>
+          <li>All archived showtimes are automatically reopened at 12:00 AM every day</li>
+          <li>New showtimes for the next day are automatically generated at 12:00 AM every day</li>
           <li>These buttons let you manually trigger these processes if needed</li>
           <li>Use "Archive Past Showtimes" if you notice old showtimes still showing as available</li>
+          <li>Use "Reopen All Showtimes" to manually make all archived showtimes available again</li>
           <li>Use "Generate Tomorrow's Showtimes" if you don't see any showtimes for tomorrow</li>
         </ul>
       </div>

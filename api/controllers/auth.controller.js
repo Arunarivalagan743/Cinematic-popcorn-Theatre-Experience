@@ -267,25 +267,34 @@ export const validateToken = async (req, res, next) => {
 
 export const validateSession = async (req, res, next) => {
   try {
+    console.log('🔍 Session validation request:', {
+      cookies: req.cookies,
+      headers: req.headers.cookie
+    });
+    
     const token = req.cookies.access_token || req.cookies.token;
 
     if (!token) {
+      console.log('❌ No token found in cookies');
       return res.status(401).json({ valid: false, message: 'No session found' });
     }
 
+    console.log('✅ Token found, verifying...');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
 
     if (!user || !user.isActive) {
+      console.log('❌ User not found or inactive:', { userId: decoded.id, userExists: !!user, isActive: user?.isActive });
       res.clearCookie('access_token');
       res.clearCookie('token');
       return res.status(401).json({ valid: false, message: 'Invalid session' });
     }
 
+    console.log('✅ Session validation successful for user:', user.username);
     const { password: hashedPassword, ...rest } = user._doc;
     res.status(200).json({ valid: true, user: rest });
   } catch (error) {
-    console.error('Session validation error:', error);
+    console.error('❌ Session validation error:', error.message);
     res.clearCookie('access_token');
     res.clearCookie('token');
     res.status(401).json({ valid: false, message: 'Session validation failed' });
