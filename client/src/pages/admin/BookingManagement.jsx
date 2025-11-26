@@ -194,7 +194,7 @@ export default function BookingManagement() {
                 <option value="all">All Movies</option>
                 {movies.map((movie) => (
                   <option key={movie._id} value={movie._id}>
-                    {movie.name}
+                    {movie.title || movie.name}
                   </option>
                 ))}
               </select>
@@ -264,7 +264,8 @@ export default function BookingManagement() {
                         <img
                           src={getMovieImage(booking.movieId)}
                           alt={booking.movieId?.name}
-                          className="w-12 h-16 object-cover rounded mr-3"
+                          className="w-12 h-16 object-cover object-center rounded mr-3 flex-shrink-0"
+                          loading="lazy"
                           onError={(e) => {
                             console.log('Booking management image failed to load for:', booking.movieId);
                             const defaultImage = '/src/images/new.jpg';

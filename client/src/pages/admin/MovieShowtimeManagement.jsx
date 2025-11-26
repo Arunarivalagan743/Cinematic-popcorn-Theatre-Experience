@@ -324,7 +324,7 @@ export default function MovieShowtimeManagement() {
                         : 'hover:bg-gray-100 border-gray-200'
                     }`}
                   >
-                    <p className="font-medium">{movie.name}</p>
+                    <p className="font-medium">{movie.title || movie.name}</p>
                     <p className="text-sm text-gray-500">
                       Duration: {movie.duration} mins
                     </p>

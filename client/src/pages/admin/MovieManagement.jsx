@@ -35,6 +35,7 @@ export default function MovieManagement() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    title: '',
     genre: '',
     language: '',
     cast: '',
@@ -88,6 +89,7 @@ export default function MovieManagement() {
     setImagePreview('');
     setFormData({
       name: '',
+      title: '',
       genre: '',
       language: '',
       cast: '',
@@ -106,12 +108,13 @@ export default function MovieManagement() {
     setImageFile(null);
     setImagePreview(movie.imageUrl || '');
     setFormData({
-      name: movie.name || '',
+      name: movie.title || movie.name || '',
+      title: movie.title || movie.name || '',
       genre: movie.genre || '',
-      language: movie.language || '',
-      cast: movie.cast || '',
+      language: Array.isArray(movie.language) ? movie.language.join(', ') : (movie.language || ''),
+      cast: Array.isArray(movie.cast) ? movie.cast.join(', ') : (movie.cast || ''),
       summary: movie.summary || '',
-      imageUrl: movie.imageUrl || '',
+      imageUrl: movie.imageUrl || movie.poster || '',
       ratings: movie.ratings || '',
       duration: movie.duration || '',
       votes: movie.votes || ''
@@ -298,8 +301,12 @@ export default function MovieManagement() {
               <div className="relative">
                 <img
                   src={movie.imageUrl}
-                  alt={movie.name}
-                  className="w-full h-64 object-cover"
+                  alt={movie.title || movie.name}
+                  className="w-full h-64 object-cover object-center"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/300x400/333333/cccccc?text=No+Image';
+                  }}
                 />
                 <div className="absolute top-2 right-2 bg-black bg-opacity-70 rounded px-2 py-1 flex items-center">
                   <FaStar className="text-yellow-400 mr-1" />
@@ -308,7 +315,7 @@ export default function MovieManagement() {
               </div>
               
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-[#C8A951] mb-2">{movie.name}</h3>
+                <h3 className="text-lg font-semibold text-[#C8A951] mb-2">{movie.title || movie.name}</h3>
                 <div className="space-y-2 text-sm text-[#F5F5F5]/70">
                   <div className="flex items-center">
                     <FaTheaterMasks className="mr-2" />
@@ -316,7 +323,7 @@ export default function MovieManagement() {
                   </div>
                   <div className="flex items-center">
                     <FaLanguage className="mr-2" />
-                    <span>{movie.language}</span>
+                    <span>{Array.isArray(movie.language) ? movie.language.join(', ') : movie.language}</span>
                   </div>
                   <div className="flex items-center">
                     <FaClock className="mr-2" />

@@ -340,7 +340,8 @@ const MovieDetails = () => {
                     : getMovieImage(movie.name) || movie.imageUrl
                 }
                 alt={movie.name}
-                className="w-48 h-72 object-cover rounded-lg border border-[#C8A951]/30"
+                className="w-48 h-72 object-cover object-center rounded-lg border border-[#C8A951]/30"
+                loading="lazy"
                 onError={(e) => {
                   e.target.src = 'https://via.placeholder.com/300x450/1a1a1a/c8a951?text=No+Image';
                 }}

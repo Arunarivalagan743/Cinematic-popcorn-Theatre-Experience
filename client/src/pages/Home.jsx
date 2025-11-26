@@ -214,7 +214,7 @@ const Home = () => {
       title: (
         <div className="flex items-center">
           <FaFilm className="mr-3 text-[#C8A951]" size={24} style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.4))'}} />
-          <strong className="font-cinzel text-[#C8A951]" style={{textShadow: '0 0 5px rgba(200, 169, 81, 0.2)'}}>{movie.name}</strong>
+          <strong className="font-cinzel text-[#C8A951]" style={{textShadow: '0 0 5px rgba(200, 169, 81, 0.2)'}}>{movie.title || movie.name}</strong>
         </div>
       ),
       html: (
@@ -225,7 +225,7 @@ const Home = () => {
           </div>
           <div className="flex items-center">
             <FaUser className="mr-3 text-[#C8A951]" size={20} style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
-            <p><strong className="text-[#C8A951]">Cast:</strong> <span className="text-[#F5F5F5]">{movie.cast}</span></p>
+            <p><strong className="text-[#C8A951]">Cast:</strong> <span className="text-[#F5F5F5]">{Array.isArray(movie.cast) ? movie.cast.join(', ') : movie.cast}</span></p>
           </div>
           <div className="flex items-start">
             <FaNewspaper className="mr-3 mt-1 text-[#C8A951]" size={20} style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
@@ -262,7 +262,7 @@ const Home = () => {
   const filteredMovies = movies
     .filter((movie) => 
       // Only filter by search query - show all movies regardless of showtime status
-      movie.name.toLowerCase().includes(searchQuery.toLowerCase())
+      (movie.title || movie.name).toLowerCase().includes(searchQuery.toLowerCase())
     );
 
   // Helper function to check if a movie has valid showtimes
@@ -334,7 +334,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] p-6 font-poppins">
+    <div className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] p-4 sm:p-6 lg:p-8 font-poppins">
       <div className="flex flex-col md:flex-row items-center justify-between mb-6">
         <h1 className="text-3xl lg:text-4xl font-playfair font-bold text-center text-[#C8A951] tracking-wide flex items-center justify-center" style={{textShadow: '0 0 10px rgba(200, 169, 81, 0.3)'}}>
           <FontAwesomeIcon icon={faTheaterMasks} className="mr-3 text-[#C8A951]" style={{filter: 'drop-shadow(0 0 5px rgba(200, 169, 81, 0.4))'}} />
@@ -363,13 +363,13 @@ const Home = () => {
       )}
 
       {/* Search Bar */}
-      <div className="mb-10 flex justify-center gap-4">
-        <div className="flex items-center bg-[#0D0D0D] border border-[#C8A951]/30 shadow-lg transition-all duration-300 hover:border-[#C8A951]" style={{boxShadow: '0 0 15px rgba(0, 0, 0, 0.4)'}}>
+      <div className="mb-4 sm:mb-6 lg:mb-8 flex justify-center px-2 sm:px-0">
+        <div className="flex items-center bg-[#0D0D0D] border border-[#C8A951]/30 shadow-lg transition-all duration-300 hover:border-[#C8A951] rounded-lg overflow-hidden max-w-md w-full" style={{boxShadow: '0 0 15px rgba(0, 0, 0, 0.4)'}}>
           <FontAwesomeIcon icon={faSearch} className="text-[#C8A951] p-3" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />
           <input
             type="text"
             placeholder="Search for a movie..."
-            className="p-3 bg-[#0D0D0D] text-[#F5F5F5] focus:outline-none transition-all duration-300 ease-in-out w-60 md:w-80 font-poppins"
+            className="p-3 bg-[#0D0D0D] text-[#F5F5F5] focus:outline-none transition-all duration-300 ease-in-out w-full font-poppins"
             style={{boxShadow: 'inset 0 0 10px rgba(0, 0, 0, 0.2)'}}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -377,67 +377,90 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+      <div className="movie-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 md:gap-10 lg:gap-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {filteredMovies.map((movie) => (
           <div
             key={movie._id}
-            className="relative group bg-[#0D0D0D] border border-[#C8A951]/20 overflow-hidden shadow-lg transition-all duration-300 hover:border-[#C8A951]/50"
-            style={{boxShadow: '0 0 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(200, 169, 81, 0.1)'}}
+            className="relative group bg-[#0D0D0D] border border-[#C8A951]/20 rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 hover:border-[#C8A951]/80 hover:shadow-[0_20px_50px_rgba(0,0,0,0.8)] hover:scale-[1.03] backdrop-blur-sm max-w-md mx-auto"
+            style={{boxShadow: '0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(200, 169, 81, 0.15)'}}
           >
             <div
-              className="relative w-auto max-h-fit overflow-hidden cursor-pointer"
+              className="relative overflow-hidden cursor-pointer p-4"
               onClick={() => showMovieDetails(movie)}
             >
-              <img
-                src={
-                  movie.imageUrl && movie.imageUrl.startsWith('http') 
-                    ? movie.imageUrl // Use Cloudinary URL directly
-                    : imageMap[movie.imageUrl] || '/src/images/new.jpg'
-                }
-                alt={movie.name || 'Movie Poster'}
-                className="w-full h-full object-cover object-center transition-all duration-500 group-hover:scale-105"
-                onError={(e) => {
-                  // Fallback if Cloudinary image fails to load
-                  e.target.src = '/src/images/new.jpg';
-                }}
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-[#0D0D0D]/90 flex gap-3 items-center p-3 border-t border-[#C8A951]/30">
-                <div className="flex items-center text-[#C8A951] font-cinzel">
-                  <FontAwesomeIcon icon={faStar} className="mr-2" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.4))'}} />
+              <div className="aspect-square w-full max-w-sm mx-auto bg-[#1A1A1A] rounded-xl overflow-hidden border border-[#C8A951]/10 shadow-inner">
+                <img
+                  src={
+                    movie.imageUrl && movie.imageUrl.startsWith('http') 
+                      ? movie.imageUrl // Use Cloudinary URL directly
+                      : imageMap[movie.imageUrl] || '/src/images/new.jpg'
+                  }
+                  alt={movie.name || 'Movie Poster'}
+                  className="w-full h-full object-cover object-center transition-all duration-700 group-hover:scale-110"
+                  onError={(e) => {
+                    // Fallback if Cloudinary image fails to load
+                    e.target.src = '/src/images/new.jpg';
+                  }}
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute bottom-2 left-2 right-2 bg-[#0D0D0D]/95 flex gap-3 items-center p-3 border border-[#C8A951]/30 rounded-lg backdrop-blur-md">
+                <div className="flex items-center text-[#C8A951] font-cinzel text-sm">
+                  <FontAwesomeIcon icon={faStar} className="mr-2" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.6))'}} />
                   {movie.ratings}
                 </div>
-                <div className="flex items-center text-[#E50914] font-cinzel">
-                  <FontAwesomeIcon icon={faThumbsUp} className="mr-2" style={{filter: 'drop-shadow(0 0 3px rgba(229, 9, 20, 0.4))'}} />
+                <div className="flex items-center text-[#E50914] font-cinzel text-sm">
+                  <FontAwesomeIcon icon={faThumbsUp} className="mr-2" style={{filter: 'drop-shadow(0 0 3px rgba(229, 9, 20, 0.6))'}} />
                   {movie.votes} Votes
                 </div>
               </div>
             </div>
 
-            <div className="p-5 text-[#F5F5F5] text-sm md:text-base space-y-4 font-poppins">
-              <p className="text-xl md:text-2xl font-bold text-[#C8A951] flex items-center gap-3 font-cinzel" style={{textShadow: '0 0 5px rgba(200, 169, 81, 0.2)'}}>
-                <FontAwesomeIcon icon={faFilm} className="text-[#C8A951]" />
-                {movie.name}
-              </p>
+            <div className="p-6 bg-gradient-to-t from-[#0D0D0D] via-[#1A1A1A] to-[#0D0D0D] text-[#F5F5F5] space-y-4 font-poppins">
+              {/* Movie Title */}
+              <div className="flex items-center gap-3 mb-5">
+                <FontAwesomeIcon icon={faFilm} className="text-[#C8A951] text-xl flex-shrink-0" style={{filter: 'drop-shadow(0 0 4px rgba(200, 169, 81, 0.5))'}} />
+                <h3 className="text-xl sm:text-2xl font-bold text-[#C8A951] font-cinzel leading-tight" style={{textShadow: '0 0 8px rgba(200, 169, 81, 0.3)'}}>
+                  {movie.title || movie.name}
+                </h3>
+              </div>
+              
+              {/* Movie Details Grid */}
+              <div className="space-y-4">
               
               {/* Show screen and timing from showtimes if available */}
               {(() => {
                 // Check if movie has valid showtimes
                 if (!hasValidShowtimes(movie)) {
                   return (
-                    <div className="space-y-2">
-                      <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                        <FontAwesomeIcon icon={faTv} className="text-[#C8A951]" />
-                        Screen: <span className="font-semibold text-yellow-400">TBA (Coming Soon)</span>
-                      </p>
-                      <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                        <FontAwesomeIcon icon={faClock} className="text-[#C8A951]" />
-                        Show Time: <span className="font-semibold text-yellow-400">TBA (Coming Soon)</span>
-                      </p>
-                      <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                        <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951]" />
-                        Language: <span className="font-semibold">{movie.language}</span>
-                      </p>
+                    <>
+                    {/* Screen Info */}
+                    <div className="flex items-center gap-4 p-3">
+                      <FontAwesomeIcon icon={faTv} className="text-[#C8A951] text-xl flex-shrink-0" />
+                      <div className="flex-1">
+                        <span className="text-sm text-[#C8A951] font-semibold block mb-1">Screen</span>
+                        <span className="text-yellow-400 font-bold text-base">TBA (Coming Soon)</span>
+                      </div>
                     </div>
+                    
+                    {/* Show Time Info */}
+                    <div className="flex items-center gap-4 p-3">
+                      <FontAwesomeIcon icon={faClock} className="text-[#C8A951] text-xl flex-shrink-0" />
+                      <div className="flex-1">
+                        <span className="text-sm text-[#C8A951] font-semibold block mb-1">Show Time</span>
+                        <span className="text-yellow-400 font-bold text-base">TBA (Coming Soon)</span>
+                      </div>
+                    </div>
+                    
+                    {/* Language Info */}
+                    <div className="flex items-center gap-4 p-3">
+                      <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951] text-xl flex-shrink-0" />
+                      <div className="flex-1">
+                        <span className="text-sm text-[#C8A951] font-semibold block mb-1">Language</span>
+                        <span className="text-[#F5F5F5] font-bold text-base">{Array.isArray(movie.language) ? movie.language.join(', ') : movie.language}</span>
+                      </div>
+                    </div>
+                    </>
                   );
                 }
                 
@@ -448,14 +471,22 @@ const Home = () => {
                 const firstValidShowtime = validShowtimes?.[0];
                 
                 return firstValidShowtime && typeof firstValidShowtime === 'object' ? (
-                <div className="space-y-2">
-                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                    <FontAwesomeIcon icon={faTv} className="text-[#C8A951]" />
-                    Screen: <span className="font-semibold">{firstValidShowtime.screen}</span>
-                  </p>
-                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                    <FontAwesomeIcon icon={faClock} className="text-[#C8A951]" />
-                    Show Time: <span className="font-semibold">
+                <>
+                {/* Screen Info */}
+                <div className="flex items-center gap-4 p-3">
+                  <FontAwesomeIcon icon={faTv} className="text-[#C8A951] text-xl flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-sm text-[#C8A951] font-semibold block mb-1">Screen</span>
+                    <span className="text-[#F5F5F5] font-bold text-base">{firstValidShowtime.screen}</span>
+                  </div>
+                </div>
+                
+                {/* Show Time Info */}
+                <div className="flex items-center gap-4 p-3">
+                  <FontAwesomeIcon icon={faClock} className="text-[#C8A951] text-xl flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-sm text-[#C8A951] font-semibold block mb-1">Show Time</span>
+                    <span className="text-[#F5F5F5] font-bold text-sm leading-relaxed">
                       {new Date(firstValidShowtime.startTime).toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -466,55 +497,76 @@ const Home = () => {
                         hour12: true
                       })}
                     </span>
-                  </p>
-                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                    <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951]" />
-                    Language: <span className="font-semibold">{movie.language}</span>
-                  </p>
-                  
-                  {/* Time slot category */}
-                  <div className="flex items-center gap-3">
-                    <FontAwesomeIcon icon={faTheaterMasks} className="text-[#C8A951]" />
-                    <span className="text-base md:text-lg font-medium text-[#F5F5F5]">
-                      Time Slot: 
-                      <span className={`font-semibold ml-1 px-2 py-1 rounded-md text-sm ${
-                        firstValidShowtime.screen === 'Screen 1' 
-                          ? 'bg-yellow-600/20 text-yellow-300' // Morning
-                          : firstValidShowtime.screen === 'Screen 2'
-                          ? 'bg-orange-600/20 text-orange-300' // Afternoon
-                          : 'bg-purple-600/20 text-purple-300' // Night
-                      }`}>
-                        {firstValidShowtime.screen === 'Screen 1' 
-                          ? '🌅 Morning Show' 
-                          : firstValidShowtime.screen === 'Screen 2'
-                          ? '🌞 Afternoon Show'
-                          : '🌙 Night Show'
-                        }
-                      </span>
-                    </span>
                   </div>
                 </div>
-              ) : (
-                /* Fallback to movie properties if showtimes not available */
-                <div className="space-y-2">
-                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                    <FontAwesomeIcon icon={faTv} className="text-[#C8A951]" />
-                    Screen: <span className="font-semibold">{movie.screen || 'TBA'}</span>
-                  </p>
-                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                    <FontAwesomeIcon icon={faClock} className="text-[#C8A951]" />
-                    Timing: <span className="font-semibold">{movie.timing || 'TBA'}</span>
-                  </p>
-                  <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
-                    <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951]" />
-                    Language: <span className="font-semibold">{movie.language}</span>
-                  </p>
+                
+                {/* Language Info */}
+                <div className="flex items-center gap-4 p-3">
+                  <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951] text-xl flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-sm text-[#C8A951] font-semibold block mb-1">Language</span>
+                    <span className="text-[#F5F5F5] font-bold text-base">{movie.language}</span>
+                  </div>
                 </div>
+                  
+                  {/* Time Slot Category */}
+                  <div className="flex items-center gap-4 p-3">
+                    <FontAwesomeIcon icon={faTheaterMasks} className="text-[#C8A951] text-xl flex-shrink-0" />
+                    <div className="flex-1">
+                      <span className="text-sm text-[#C8A951] font-semibold block mb-2">Time Slot</span>
+                      <span className={`inline-flex items-center gap-3 px-4 py-2 rounded-full font-bold text-sm ${
+                        firstValidShowtime.screen === 'Screen 1' 
+                          ? 'bg-yellow-600/25 text-yellow-200 border border-yellow-400/40' // Morning
+                          : firstValidShowtime.screen === 'Screen 2'
+                          ? 'bg-orange-600/25 text-orange-200 border border-orange-400/40' // Afternoon
+                          : 'bg-purple-600/25 text-purple-200 border border-purple-400/40' // Night
+                      }`}>
+                        {firstValidShowtime.screen === 'Screen 1' 
+                          ? 'Morning Show' 
+                          : firstValidShowtime.screen === 'Screen 2'
+                          ? 'Afternoon Show'
+                          : 'Night Show'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                {/* Fallback to movie properties if showtimes not available */}
+                {/* Screen Info */}
+                <div className="flex items-center gap-4 p-3">
+                  <FontAwesomeIcon icon={faTv} className="text-[#C8A951] text-xl flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-sm text-[#C8A951] font-semibold block mb-1">Screen</span>
+                    <span className="text-[#F5F5F5] font-bold text-base">{movie.screen || 'TBA'}</span>
+                  </div>
+                </div>
+                
+                {/* Timing Info */}
+                <div className="flex items-center gap-4 p-3">
+                  <FontAwesomeIcon icon={faClock} className="text-[#C8A951] text-xl flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-sm text-[#C8A951] font-semibold block mb-1">Timing</span>
+                    <span className="text-[#F5F5F5] font-bold text-base">{movie.timing || 'TBA'}</span>
+                  </div>
+                </div>
+                
+                {/* Language Info */}
+                <div className="flex items-center gap-4 p-3">
+                  <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951] text-xl flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-sm text-[#C8A951] font-semibold block mb-1">Language</span>
+                    <span className="text-[#F5F5F5] font-bold text-base">{Array.isArray(movie.language) ? movie.language.join(', ') : movie.language}</span>
+                  </div>
+                </div>
+                </>
               );
               })()}
             </div>
+            </div>
 
-            <div className="px-5 pb-5 text-center flex flex-col gap-3">
+            <div className="px-6 pb-6 bg-gradient-to-t from-[#0D0D0D] to-[#1A1A1A] text-center flex flex-col gap-4">
               {/* Primary: Real-time booking button with cutoff validation */}
               {(() => {
                 // Check if movie has valid showtimes

@@ -4,20 +4,43 @@ import Showtime from '../models/showtime.model.js';
 // Controller to handle POST request to create a movie
 export const createMovie = async (req, res) => {
   try {
-    const { name, genre, language, cast, summary, imageUrl, ratings, votes, duration } = req.body;
+    // Support both old and new schema
+    const { 
+      // New schema fields
+      title, year, language, genre, releaseDate, cast, crew, 
+      productionCompanies, musicBy, cinematography, editing, budget, 
+      summary, poster, status, ratings, votes, duration, runtime,
+      // Old schema fields (backward compatibility)
+      name, imageUrl 
+    } = req.body;
     
+    // Create movie object with new schema, falling back to old schema fields
+    const movieData = {
+      title: title || name, // title takes precedence, fall back to name
+      name: name || title, // keep name for backward compatibility
+      year: year || new Date().getFullYear(),
+      genre: genre || 'Unknown',
+      language: Array.isArray(language) ? language : [language || 'Unknown'],
+      releaseDate: releaseDate || new Date().toISOString().split('T')[0],
+      cast: Array.isArray(cast) ? cast : (typeof cast === 'string' ? [cast] : []),
+      crew: crew || {},
+      productionCompanies: productionCompanies || [],
+      musicBy: musicBy || '',
+      cinematography: cinematography || '',
+      editing: editing || '',
+      budget: budget || '',
+      summary: summary || '',
+      poster: poster || imageUrl || '',
+      imageUrl: imageUrl || poster || '', // keep imageUrl for backward compatibility
+      status: status || 'Released',
+      ratings: ratings || 0,
+      votes: votes || 0,
+      duration: duration || (runtime ? parseInt(runtime) : 120),
+      runtime: runtime || `${duration || 120} minutes`
+    };
+
     // Create a new movie object
-    const newMovie = new Movie({
-      name,
-      genre,
-      language,
-      cast,
-      summary,
-      imageUrl,
-      ratings,
-      votes,
-      duration: duration || 120 // Default to 120 minutes if not provided
-    });
+    const newMovie = new Movie(movieData);
 
     // Save the new movie to the database
     await newMovie.save();
@@ -74,7 +97,7 @@ export const getAllMovies = async (req, res) => {
         const isAfterCutoff = currentTime > cutoffTime;
         
         console.log(`Showtime ${showtime._id} check:`, {
-          movieName: movie.name,
+          movieTitle: movie.title || movie.name,
           screen: showtime.screen,
           startTime: showtimeStart.toLocaleString(),
           endTime: showtimeEnd.toLocaleString(),

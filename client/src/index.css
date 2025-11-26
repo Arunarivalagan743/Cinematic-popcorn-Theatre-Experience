@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import image optimization styles */
+@import './styles/image-optimization.css';
+
 /* Luxury Cinematic Theme Colors */
 :root {
   --bg-deep-black: #0D0D0D;

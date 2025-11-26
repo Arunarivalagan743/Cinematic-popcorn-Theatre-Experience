@@ -577,7 +577,8 @@ export default function Profile() {
                           <img 
                             src={getMovieImage(booking.movieId)} 
                             alt={booking.movieId?.name || 'Movie'}
-                            className="w-16 h-20 lg:w-20 lg:h-28 object-cover rounded-lg shadow-md border border-[#C8A951]/20"
+                            className="w-16 h-20 lg:w-20 lg:h-28 object-cover object-center rounded-lg shadow-md border border-[#C8A951]/20"
+                            loading="lazy"
                             onError={(e) => {
                               console.log('Movie image failed to load for:', booking.movieId);
                               e.target.src = NewMovie;
