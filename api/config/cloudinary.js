@@ -6,11 +6,25 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+const requiredCloudinaryVars = [
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+];
+
+const missingCloudinaryVars = requiredCloudinaryVars.filter((key) => !process.env[key]);
+
+if (missingCloudinaryVars.length) {
+  throw new Error(
+    `Missing Cloudinary environment variables: ${missingCloudinaryVars.join(', ')}`
+  );
+}
+
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dxccrqins',
-  api_key: process.env.CLOUDINARY_API_KEY || '877957946499695',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'eBGtG6AYQgVuGck_UTnd_EKUCrY',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Configure Cloudinary storage for multer
