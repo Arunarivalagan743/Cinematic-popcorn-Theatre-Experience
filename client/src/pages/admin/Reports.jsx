@@ -144,7 +144,8 @@ export default function Reports() {
               <FaChartBar className="mr-3" />
               Revenue Reports
             </h1>
-            <p className="text-[#F5F5F5]/70">Analyze revenue and booking trends</p>
+            <p className="text-[#F5F5F5]/70">Analyze revenue and booking trends within selected date range</p>
+            <p className="text-[#F5F5F5]/50 text-sm mt-1">💡 Tip: Adjust date range below to see different time periods</p>
           </div>
           <button 
             onClick={() => navigate('/admin/dashboard')}
@@ -222,6 +223,9 @@ export default function Reports() {
               <div>
                 <p className="text-[#F5F5F5]/70 text-sm">Total Revenue</p>
                 <p className="text-3xl font-bold text-[#C8A951]">{formatCurrency(totalRevenue)}</p>
+                <p className="text-xs text-[#F5F5F5]/50 mt-1">
+                  {formatDate(dateRange.startDate)} - {formatDate(dateRange.endDate)}
+                </p>
               </div>
               <div className="p-3 rounded-lg bg-green-500">
                 <FaDollarSign className="text-white text-xl" />
@@ -255,6 +259,36 @@ export default function Reports() {
         </div>
 
         {/* Charts */}
+        {totalBookings === 0 ? (
+          <div className="bg-[#1A1A1A] border border-[#C8A951]/30 p-8 rounded-lg text-center mb-8">
+            <FaChartBar className="text-6xl text-[#F5F5F5]/30 mb-4 mx-auto" />
+            <h3 className="text-xl font-semibold text-[#F5F5F5] mb-2">No Data Available</h3>
+            <p className="text-[#F5F5F5]/70 mb-4">
+              No bookings found for the selected date range ({formatDate(dateRange.startDate)} - {formatDate(dateRange.endDate)})
+            </p>
+            <p className="text-[#F5F5F5]/50 text-sm mb-4">
+              💡 Try expanding the date range or check if there are bookings in the system
+            </p>
+            <button
+              onClick={() => {
+                setDateRange(prev => ({
+                  ...prev,
+                  startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 90 days
+                }));
+              }}
+              className="bg-[#C8A951] text-[#0D0D0D] px-4 py-2 rounded hover:bg-[#DFBD69] transition duration-300 mr-2"
+            >
+              Try Last 90 Days
+            </button>
+            <button
+              onClick={() => navigate('/admin/bookings')}
+              className="bg-[#1A1A1A] text-[#F5F5F5] px-4 py-2 border border-[#C8A951]/30 rounded hover:bg-[#C8A951]/10 transition duration-300"
+            >
+              View All Bookings
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Revenue Trend Chart */}
           <div className="bg-[#1A1A1A] border border-[#C8A951]/30 p-6 rounded-lg">
@@ -401,6 +435,8 @@ export default function Reports() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );

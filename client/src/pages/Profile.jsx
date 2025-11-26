@@ -47,6 +47,11 @@ export default function Profile() {
     password: '',
   });
   
+  // Profile picture upload states
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState(null);
+  const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
+  
   // Bookings state
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
@@ -138,6 +143,74 @@ export default function Profile() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  // Handle profile picture file selection
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+      
+      setProfilePictureFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfilePicturePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload profile picture to Cloudinary
+  const handleProfilePictureUpload = async () => {
+    if (!profilePictureFile) {
+      alert('Please select an image first');
+      return;
+    }
+
+    try {
+      setUploadingProfilePicture(true);
+      
+      const formData = new FormData();
+      formData.append('profilePicture', profilePictureFile);
+
+      const response = await fetch(`${backendUrl}/api/user/upload-profile-picture`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update user in Redux store
+        dispatch(updateUserSuccess(data.user));
+        
+        // Clear upload states
+        setProfilePictureFile(null);
+        setProfilePicturePreview(null);
+        
+        alert('Profile picture updated successfully!');
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Profile picture upload error:', error);
+      alert('Failed to upload profile picture: ' + error.message);
+    } finally {
+      setUploadingProfilePicture(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -293,12 +366,63 @@ export default function Profile() {
               </h1>
               
               <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-                <img
-                  src={currentUser?.profilePicture || 'default-profile.png'}
-                  alt="profile"
-                  className="h-24 w-24 self-center cursor-pointer object-cover mt-2 border-2 border-[#C8A951] shadow-md transition-transform duration-300 hover:scale-105"
-                  style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
-                />
+                {/* Profile Picture Section */}
+                <div className="self-center">
+                  <div className="relative">
+                    <img
+                      src={profilePicturePreview || currentUser?.profilePicture || 'default-profile.png'}
+                      alt="profile"
+                      className="h-24 w-24 cursor-pointer object-cover mt-2 border-2 border-[#C8A951] shadow-md transition-transform duration-300 hover:scale-105 rounded-full"
+                      style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
+                      onClick={() => document.getElementById('profilePictureInput').click()}
+                    />
+                    {uploadingProfilePicture && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                        <FaSpinner className="text-[#C8A951] animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <input
+                    type="file"
+                    id="profilePictureInput"
+                    accept="image/*"
+                    onChange={handleProfilePictureChange}
+                    className="hidden"
+                  />
+                  
+                  {profilePictureFile && (
+                    <div className="mt-2 text-center">
+                      <p className="text-[#F5F5F5]/70 text-xs mb-2">
+                        Selected: {profilePictureFile.name}
+                      </p>
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          type="button"
+                          onClick={handleProfilePictureUpload}
+                          disabled={uploadingProfilePicture}
+                          className="bg-[#C8A951] text-[#0D0D0D] px-3 py-1 text-xs rounded hover:bg-[#DFBD69] transition duration-300 disabled:opacity-50"
+                        >
+                          {uploadingProfilePicture ? 'Uploading...' : 'Upload'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfilePictureFile(null);
+                            setProfilePicturePreview(null);
+                          }}
+                          className="bg-[#1A1A1A] text-[#F5F5F5] px-3 py-1 text-xs rounded hover:bg-[#333] transition duration-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <p className="text-[#F5F5F5]/50 text-xs mt-1 text-center">
+                    Click to change profile picture
+                  </p>
+                </div>
                 
                 <div className="flex items-center border-b border-[#C8A951]/30 focus-within:border-[#C8A951] transition duration-300 pb-1">
                   <FaUser className="text-[#C8A951] mr-3" style={{filter: 'drop-shadow(0 0 3px rgba(200, 169, 81, 0.3))'}} />

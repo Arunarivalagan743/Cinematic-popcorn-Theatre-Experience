@@ -32,14 +32,14 @@ export const getDashboardStats = async (req, res) => {
       // Today's bookings
       Booking.countDocuments({
         createdAt: { $gte: startOfDay, $lte: endOfDay },
-        paymentStatus: 'confirmed'
+        paymentStatus: { $in: ['confirmed', 'COMPLETED'] }
       }),
       // Today's revenue
       Booking.aggregate([
         {
           $match: {
             createdAt: { $gte: startOfDay, $lte: endOfDay },
-            paymentStatus: 'confirmed'
+            paymentStatus: { $in: ['confirmed', 'COMPLETED'] }
           }
         },
         { $group: { _id: null, total: { $sum: '$totalCost' } } }
@@ -64,7 +64,7 @@ export const getDashboardStats = async (req, res) => {
     ]);
 
     // Get recent bookings
-    const recentBookings = await Booking.find({ paymentStatus: 'confirmed' })
+    const recentBookings = await Booking.find({ paymentStatus: { $in: ['confirmed', 'COMPLETED'] } })
       .populate('movieId', 'name imageUrl')
       .populate('userId', 'username email')
       .populate('showtimeId')
@@ -504,7 +504,7 @@ export const getRevenueReport = async (req, res) => {
       {
         $match: {
           createdAt: { $gte: start, $lte: end },
-          paymentStatus: 'confirmed'
+          paymentStatus: { $in: ['confirmed', 'COMPLETED'] }
         }
       },
       {
@@ -522,7 +522,7 @@ export const getRevenueReport = async (req, res) => {
       {
         $match: {
           createdAt: { $gte: start, $lte: end },
-          paymentStatus: 'confirmed'
+          paymentStatus: { $in: ['confirmed', 'COMPLETED'] }
         }
       },
       {

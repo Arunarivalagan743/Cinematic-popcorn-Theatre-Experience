@@ -2,6 +2,7 @@ import User from '../models/user.model.js';
 import Booking from '../models/booking.js';
 import { errorHandler } from '../utils/error.js';
 import bcryptjs from 'bcryptjs';
+import cloudinary from '../config/cloudinary.js';
 
 export const test = (req, res) => {
   res.json({
@@ -39,6 +40,60 @@ export const getUserWithBookings = async (req, res, next) => {
   } catch (error) {
     console.error('Error fetching user bookings:', error);
     next(error);
+  }
+};
+
+// Upload profile picture to Cloudinary
+export const uploadProfilePicture = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next(errorHandler(400, 'No image file provided'));
+    }
+
+    console.log('📸 Uploading profile picture for user:', req.user.id);
+    console.log('📁 File info:', {
+      filename: req.file.filename,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'cinematic_profile_pictures',
+      public_id: `user_${req.user.id}_${Date.now()}`,
+      transformation: [
+        { width: 300, height: 300, crop: 'fill' }, // Square crop for profile picture
+        { quality: 'auto', fetch_format: 'auto' } // Optimize quality and format
+      ]
+    });
+
+    console.log('✅ Cloudinary upload successful:', result.secure_url);
+
+    // Update user's profile picture in database
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { 
+        $set: { 
+          profilePicture: result.secure_url 
+        } 
+      },
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return next(errorHandler(404, 'User not found'));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile picture uploaded successfully',
+      profilePicture: result.secure_url,
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.error('❌ Profile picture upload error:', error);
+    next(errorHandler(500, 'Failed to upload profile picture: ' + error.message));
   }
 };
 

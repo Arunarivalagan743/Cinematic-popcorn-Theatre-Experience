@@ -284,7 +284,10 @@ export default function AdminDashboard() {
           {/* Recent Bookings */}
           <div className="lg:col-span-2 bg-[#1A1A1A] border border-[#C8A951]/30 p-6 rounded-lg">
             <h3 className="text-xl font-semibold text-[#C8A951] mb-4 flex items-center justify-between">
-              Recent Bookings
+              <div className="flex items-center">
+                Recent Bookings
+                <span className="text-sm font-normal text-[#F5F5F5]/60 ml-2">(Last 10, All Time)</span>
+              </div>
               <button 
                 onClick={() => navigate('/admin/bookings')}
                 className="text-sm bg-[#C8A951] text-[#0D0D0D] px-3 py-1 rounded hover:bg-[#DFBD69] transition duration-300"
