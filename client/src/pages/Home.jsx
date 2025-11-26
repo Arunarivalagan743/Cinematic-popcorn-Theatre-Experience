@@ -161,57 +161,30 @@ const Home = () => {
       // The response now includes movies with their showtimes
       console.log(`Fetched ${response.data.length} movies`);
       
-      // Filter movies to only include those with available (non-archived) showtimes
-      const moviesWithShowtimes = response.data.filter(movie => {
+      // Show all movies, don't filter based on showtimes
+      console.log(`Showing all ${response.data.length} movies`);
+      
+      // Filter out movies with only past showtimes
+      const currentDate = new Date();
+      const startOfToday = new Date(currentDate);
+      startOfToday.setHours(0, 0, 0, 0);
+      
+      const moviesWithFutureShowtimes = response.data.filter(movie => {
         if (!movie.showtimes || movie.showtimes.length === 0) {
-          console.log(`Movie ${movie.name} has no showtimes`);
-          return false;
+          return true; // Keep movies without showtimes
         }
         
-        // Check if movie has any valid showtimes (non-archived and available for booking)
-        const validShowtimes = movie.showtimes.filter(showtime => {
-          const isValid = !showtime.isArchived && isShowtimeBookable(showtime);
-          if (!isValid) {
-            console.log(`Filtering out showtime for ${movie.name}: archived=${showtime.isArchived}, available=${isShowtimeBookable(showtime)}`);
-          }
-          return isValid;
+        // Check if movie has any future showtimes (today or later)
+        const hasFutureShowtimes = movie.showtimes.some(showtime => {
+          const showtimeDate = new Date(showtime.date);
+          return showtimeDate >= startOfToday && !showtime.isArchived;
         });
         
-        console.log(`Movie ${movie.name} has ${validShowtimes.length} valid showtimes out of ${movie.showtimes.length} total`);
-        return validShowtimes.length > 0;
+        return hasFutureShowtimes;
       });
       
-      console.log(`Movies with available showtimes: ${moviesWithShowtimes.length}`);
-      
-      // If no movies have showtimes, try to reopen archived ones
-      if (moviesWithShowtimes.length === 0 && response.data.length > 0) {
-        console.log("No movies with available showtimes found. Attempting to reopen archived showtimes...");
-        try {
-          const reopenResponse = await axios.post(`${backendUrl}/api/showtimes/reopen-all`, {}, {
-            withCredentials: true,
-          });
-          
-          if (reopenResponse.data && reopenResponse.data.count > 0) {
-            console.log(`Reopened ${reopenResponse.data.count} archived showtimes. Refetching movies...`);
-            
-            // Refetch movies after reopening
-            const refetchResponse = await axios.get(`${backendUrl}/api/movies`, {
-              withCredentials: true,
-            });
-            
-            console.log(`After reopening: Fetched ${refetchResponse.data.length} movies`);
-            setMovies(refetchResponse.data);
-          } else {
-            console.log("No archived showtimes found to reopen");
-            setMovies(response.data);
-          }
-        } catch (reopenErr) {
-          console.error("Error reopening archived showtimes:", reopenErr);
-          setMovies(response.data);
-        }
-      } else {
-        setMovies(response.data);
-      }
+      console.log(`Movies with future showtimes: ${moviesWithFutureShowtimes.length}`);
+      setMovies(moviesWithFutureShowtimes);
       
       setError(null);
     } catch (err) {
@@ -287,23 +260,46 @@ const Home = () => {
   };
 
   const filteredMovies = movies
-    .filter((movie) => {
-      // First filter: Only show movies with valid (non-archived) showtimes
-      if (!movie.showtimes || movie.showtimes.length === 0) {
-        return false;
-      }
-      
-      // Check if movie has any valid showtimes (non-archived and available for booking)
-      const validShowtimes = movie.showtimes.filter(showtime => 
-        !showtime.isArchived && isShowtimeBookable(showtime)
-      );
-      
-      return validShowtimes.length > 0;
-    })
     .filter((movie) => 
-      // Second filter: Search query
+      // Only filter by search query - show all movies regardless of showtime status
       movie.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+  // Helper function to check if a movie has valid showtimes
+  const hasValidShowtimes = (movie) => {
+    if (!movie.showtimes || movie.showtimes.length === 0) {
+      return false;
+    }
+    
+    const currentDate = new Date();
+    const startOfToday = new Date(currentDate);
+    startOfToday.setHours(0, 0, 0, 0);
+    
+    // Normalize date function to ensure consistent date comparison
+    const normalizeDate = (dateString) => {
+      const date = new Date(dateString);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString().split('T')[0];
+    };
+    
+    const getTodayDate = () => {
+      const today = new Date();
+      return normalizeDate(today.toISOString());
+    };
+    
+    // Check if movie has any future (today or later) and bookable showtimes
+    const validShowtimes = movie.showtimes.filter(showtime => {
+      // Use startTime instead of date field for more reliable date detection
+      const showtimeDate = normalizeDate(showtime.startTime);
+      const today = getTodayDate();
+      const isFutureDate = showtimeDate >= today;
+      const isNotArchived = !showtime.isArchived;
+      const isBookable = isShowtimeBookable(showtime);
+      
+      return isFutureDate && isNotArchived && isBookable;
+    });
+    
+    return validShowtimes.length > 0;
+  };
 
   const fontFamily = 'font-sans';
 
@@ -393,9 +389,17 @@ const Home = () => {
               onClick={() => showMovieDetails(movie)}
             >
               <img
-                src={imageMap[movie.imageUrl] || 'path/to/default-image.jpg'}
+                src={
+                  movie.imageUrl && movie.imageUrl.startsWith('http') 
+                    ? movie.imageUrl // Use Cloudinary URL directly
+                    : imageMap[movie.imageUrl] || '/src/images/new.jpg'
+                }
                 alt={movie.name || 'Movie Poster'}
                 className="w-full h-full object-cover object-center transition-all duration-500 group-hover:scale-105"
+                onError={(e) => {
+                  // Fallback if Cloudinary image fails to load
+                  e.target.src = '/src/images/new.jpg';
+                }}
               />
               <div className="absolute bottom-0 left-0 right-0 bg-[#0D0D0D]/90 flex gap-3 items-center p-3 border-t border-[#C8A951]/30">
                 <div className="flex items-center text-[#C8A951] font-cinzel">
@@ -417,6 +421,26 @@ const Home = () => {
               
               {/* Show screen and timing from showtimes if available */}
               {(() => {
+                // Check if movie has valid showtimes
+                if (!hasValidShowtimes(movie)) {
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                        <FontAwesomeIcon icon={faTv} className="text-[#C8A951]" />
+                        Screen: <span className="font-semibold text-yellow-400">TBA (Coming Soon)</span>
+                      </p>
+                      <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                        <FontAwesomeIcon icon={faClock} className="text-[#C8A951]" />
+                        Show Time: <span className="font-semibold text-yellow-400">TBA (Coming Soon)</span>
+                      </p>
+                      <p className="text-base md:text-lg font-medium text-[#F5F5F5] flex items-center gap-3">
+                        <FontAwesomeIcon icon={faLanguage} className="text-[#C8A951]" />
+                        Language: <span className="font-semibold">{movie.language}</span>
+                      </p>
+                    </div>
+                  );
+                }
+                
                 // Get the first valid (non-archived and bookable) showtime
                 const validShowtimes = movie.showtimes?.filter(showtime => 
                   !showtime.isArchived && isShowtimeBookable(showtime)
@@ -493,13 +517,8 @@ const Home = () => {
             <div className="px-5 pb-5 text-center flex flex-col gap-3">
               {/* Primary: Real-time booking button with cutoff validation */}
               {(() => {
-                // Get the first valid (non-archived and bookable) showtime
-                const validShowtimes = movie.showtimes?.filter(showtime => 
-                  !showtime.isArchived && isShowtimeBookable(showtime)
-                );
-                const firstValidShowtime = validShowtimes?.[0];
-                
-                if (!firstValidShowtime) {
+                // Check if movie has valid showtimes
+                if (!hasValidShowtimes(movie)) {
                   return (
                     <div className="space-y-2">
                       <button
@@ -509,9 +528,18 @@ const Home = () => {
                         <span className="mr-2">No Available Showtimes</span>
                         <div className="w-2 h-2 rounded-full bg-red-500"></div>
                       </button>
+                      <p className="text-yellow-400 text-sm font-poppins">
+                        Movie added - Showtimes will be available soon!
+                      </p>
                     </div>
                   );
                 }
+                
+                // Get the first valid (non-archived and bookable) showtime
+                const validShowtimes = movie.showtimes?.filter(showtime => 
+                  !showtime.isArchived && isShowtimeBookable(showtime)
+                );
+                const firstValidShowtime = validShowtimes?.[0];
                 
                 const showtimeId = firstValidShowtime._id;
                 const isBookable = isShowtimeBookable(firstValidShowtime);
@@ -540,18 +568,30 @@ const Home = () => {
                   }
                   
                   return (
-                    <div className="space-y-2">
-                      <Link to={`/tickets/${movie._id}/${showtimeId}`}>
+                    <div className="space-y-3">
+                      {/* Primary Button - View All Showtimes */}
+                      <Link to={`/movie/${movie._id}`}>
                         <button
                           className="bg-[#0D0D0D] border-2 border-[#C8A951] text-[#F5F5F5] font-playfair font-semibold py-3 px-6 transition-all duration-300 hover:shadow-lg w-full flex items-center justify-center"
                           style={{boxShadow: '0 0 15px rgba(200, 169, 81, 0.3)'}}
                         >
-                          <span className="mr-2">Book Now</span>
-                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                          <span className="mr-2">View Showtimes</span>
+                          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
                         </button>
                       </Link>
+                      
+                      {/* Secondary Button - Quick Book First Available */}
+                      <Link to={`/tickets/${movie._id}/${showtimeId}`}>
+                        <button
+                          className="bg-transparent border border-[#C8A951]/50 text-[#C8A951] font-playfair font-medium py-2 px-4 transition-all duration-300 hover:bg-[#C8A951]/10 hover:border-[#C8A951] w-full flex items-center justify-center text-sm"
+                        >
+                          <span className="mr-2">Quick Book ({firstValidShowtime.screen} - {new Date(firstValidShowtime.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })})</span>
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        </button>
+                      </Link>
+                      
                       {timeRemaining && (
-                        <p className="text-yellow-400 text-xs font-poppins">
+                        <p className="text-yellow-400 text-xs font-poppins text-center">
                           ⏰ Booking closes in {timeRemaining}
                         </p>
                       )}

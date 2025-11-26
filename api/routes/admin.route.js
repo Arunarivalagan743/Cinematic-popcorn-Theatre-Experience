@@ -1,4 +1,5 @@
 import express from 'express';
+import { upload } from '../config/cloudinary.js';
 import {
   getDashboardStats,
   getAllUsers,
@@ -13,7 +14,8 @@ import {
   getRevenueReport,
   getContactMessages,
   getFAQQuestions,
-  validateAdminAccess
+  validateAdminAccess,
+  uploadMovieImage
 } from '../controllers/admin.controller.js';
 import { verifyAdmin, verifyManager } from '../middleware/adminMiddleware.js';
 
@@ -36,6 +38,7 @@ router.put('/bookings/:bookingId', verifyManager, updateBookingStatus);
 
 // Movie Management
 router.get('/movies', verifyManager, getMoviesAdmin);
+router.post('/movies/upload-image', verifyAdmin, upload.single('image'), uploadMovieImage);
 router.post('/movies', verifyAdmin, createMovie);
 router.put('/movies/:movieId', verifyAdmin, updateMovie);
 router.delete('/movies/:movieId', verifyAdmin, deleteMovie);

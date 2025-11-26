@@ -706,7 +706,15 @@ const Tickets = () => {
                   alt={movieData.name}
                   className="w-full h-auto rounded-lg shadow-md"
                   onError={(e) => {
-                    e.target.src = '/src/images/new.jpg';
+                    console.log('Image failed to load:', e.target.src);
+                    // Try to use the default new.jpg image from local images
+                    const defaultImage = '/src/images/new.jpg';
+                    if (e.target.src !== defaultImage) {
+                      e.target.src = defaultImage;
+                    } else {
+                      // If default image also fails, use a generic fallback
+                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iIzMzMzMzMyIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==';
+                    }
                   }}
                 />
               </div>

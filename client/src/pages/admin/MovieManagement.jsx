@@ -30,6 +30,9 @@ export default function MovieManagement() {
   const [showMovieModal, setShowMovieModal] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     genre: '',
@@ -81,6 +84,8 @@ export default function MovieManagement() {
   const handleAddMovie = () => {
     setSelectedMovie(null);
     setIsEditing(false);
+    setImageFile(null);
+    setImagePreview('');
     setFormData({
       name: '',
       genre: '',
@@ -98,6 +103,8 @@ export default function MovieManagement() {
   const handleEditMovie = (movie) => {
     setSelectedMovie(movie);
     setIsEditing(true);
+    setImageFile(null);
+    setImagePreview(movie.imageUrl || '');
     setFormData({
       name: movie.name || '',
       genre: movie.genre || '',
@@ -132,14 +139,22 @@ export default function MovieManagement() {
     e.preventDefault();
     
     try {
+      let finalFormData = { ...formData };
+      
+      // Upload image if a new file is selected
+      if (imageFile) {
+        const uploadedImageUrl = await uploadImage();
+        finalFormData.imageUrl = uploadedImageUrl;
+      }
+      
       if (isEditing) {
         await axios.put(`${backendUrl}/api/admin/movies/${selectedMovie._id}`, 
-          formData,
+          finalFormData,
           { withCredentials: true }
         );
       } else {
         await axios.post(`${backendUrl}/api/admin/movies`, 
-          formData,
+          finalFormData,
           { withCredentials: true }
         );
       }
@@ -148,7 +163,7 @@ export default function MovieManagement() {
       fetchMovies();
     } catch (error) {
       console.error('Error saving movie:', error);
-      alert(error.response?.data?.message || 'Failed to save movie');
+      alert(error.response?.data?.message || error.message || 'Failed to save movie');
     }
   };
 
@@ -158,6 +173,60 @@ export default function MovieManagement() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+      
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async () => {
+    if (!imageFile) return null;
+    
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      
+      const response = await axios.post(
+        `${backendUrl}/api/admin/movies/upload-image`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          withCredentials: true
+        }
+      );
+      
+      return response.data.imageUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw new Error(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   if (loading && movies.length === 0) {
@@ -439,18 +508,63 @@ export default function MovieManagement() {
                   />
                 </div>
 
-                <div>
+                {/* Image Upload Section */}
+                <div className="space-y-4">
                   <label className="block text-sm font-medium text-[#C8A951] mb-1">
-                    Image URL
+                    Movie Image
                   </label>
-                  <input
-                    type="url"
-                    name="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full bg-[#0D0D0D] border border-[#C8A951]/30 rounded p-2 text-[#F5F5F5] focus:border-[#C8A951] focus:outline-none"
-                  />
+                  
+                  {/* Image Preview */}
+                  {imagePreview && (
+                    <div className="flex justify-center mb-4">
+                      <div className="relative">
+                        <img
+                          src={imagePreview}
+                          alt="Movie preview"
+                          className="w-32 h-48 object-cover rounded-lg border border-[#C8A951]/30"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview('');
+                            setFormData(prev => ({...prev, imageUrl: ''}));
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition duration-200"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* File Upload */}
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="w-full bg-[#0D0D0D] border border-[#C8A951]/30 rounded p-2 text-[#F5F5F5] focus:border-[#C8A951] focus:outline-none file:mr-4 file:py-1 file:px-3 file:border-0 file:text-sm file:bg-[#C8A951] file:text-[#0D0D0D] file:rounded file:cursor-pointer hover:file:bg-[#DFBD69]"
+                    />
+                    <p className="text-xs text-[#F5F5F5]/70">
+                      Upload a movie poster (JPG, PNG, WebP, GIF - Max 5MB)
+                    </p>
+                  </div>
+                  
+                  {/* Fallback URL Input */}
+                  <div className="border-t border-[#C8A951]/20 pt-3">
+                    <label className="block text-xs text-[#F5F5F5]/70 mb-1">
+                      Or enter image URL directly:
+                    </label>
+                    <input
+                      type="url"
+                      name="imageUrl"
+                      value={formData.imageUrl}
+                      onChange={handleInputChange}
+                      placeholder="https://example.com/image.jpg"
+                      className="w-full bg-[#0D0D0D] border border-[#C8A951]/20 rounded p-2 text-[#F5F5F5] focus:border-[#C8A951] focus:outline-none text-sm"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -477,9 +591,17 @@ export default function MovieManagement() {
                   </button>
                   <button
                     type="submit"
-                    className="bg-[#C8A951] text-[#0D0D0D] px-6 py-2 rounded hover:bg-[#DFBD69] transition duration-300"
+                    disabled={uploadingImage}
+                    className="bg-[#C8A951] text-[#0D0D0D] px-6 py-2 rounded hover:bg-[#DFBD69] transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
-                    {isEditing ? 'Update Movie' : 'Add Movie'}
+                    {uploadingImage ? (
+                      <>
+                        <FaSpinner className="animate-spin mr-2" />
+                        Uploading Image...
+                      </>
+                    ) : (
+                      isEditing ? 'Update Movie' : 'Add Movie'
+                    )}
                   </button>
                 </div>
               </form>

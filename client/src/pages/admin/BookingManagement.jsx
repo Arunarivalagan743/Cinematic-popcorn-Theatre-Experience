@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+// Import the shared movie image utility
+import { getMovieImage } from '../../utils/movieImages';
 import {
   FaTicketAlt,
   FaSearch,
@@ -260,9 +262,16 @@ export default function BookingManagement() {
                     <td className="py-4 px-6">
                       <div className="flex items-center">
                         <img
-                          src={booking.movieId?.imageUrl}
+                          src={getMovieImage(booking.movieId)}
                           alt={booking.movieId?.name}
                           className="w-12 h-16 object-cover rounded mr-3"
+                          onError={(e) => {
+                            console.log('Booking management image failed to load for:', booking.movieId);
+                            const defaultImage = '/src/images/new.jpg';
+                            if (e.target.src !== defaultImage) {
+                              e.target.src = defaultImage;
+                            }
+                          }}
                         />
                         <div>
                           <div className="text-[#F5F5F5] font-medium">
@@ -446,9 +455,16 @@ export default function BookingManagement() {
                     <div className="bg-[#0D0D0D] p-4 rounded">
                       <div className="flex items-center mb-3">
                         <img
-                          src={selectedBooking.movieId?.imageUrl}
+                          src={getMovieImage(selectedBooking.movieId)}
                           alt={selectedBooking.movieId?.name}
                           className="w-16 h-20 object-cover rounded mr-3"
+                          onError={(e) => {
+                            console.log('Booking modal image failed to load for:', selectedBooking.movieId);
+                            const defaultImage = '/src/images/new.jpg';
+                            if (e.target.src !== defaultImage) {
+                              e.target.src = defaultImage;
+                            }
+                          }}
                         />
                         <div>
                           <div className="text-[#F5F5F5] font-semibold text-lg">

@@ -11,6 +11,7 @@ import AdminPrivateRoute from './components/AdminPrivateRoute';
 import DebugPage from './pages/DebugPage';
 
 import TicketsNew from './pages/Tickets-new';
+import MovieDetails from './pages/MovieDetails';
 import Faq from './pages/Faq';
 import Contact from './pages/Contact';
 import Pricing from './pages/Pricing';
@@ -135,6 +136,7 @@ export default function App() {
           
           {/* Protected booking and payment routes */}
           <Route element={<PrivateRoute />}>
+            <Route path="/movie/:movieId" element={<MovieDetails />} />
             <Route path="/tickets/:movieId/:showtimeId" element={<TicketsNew />} />
             <Route path='/payment-method' element={<PaymentMethodSelection />} />
             <Route path='/payment-new' element={<PaymentNew />} />

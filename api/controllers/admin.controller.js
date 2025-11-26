@@ -7,6 +7,7 @@ import ParkingSlot from '../models/parking.model.js';
 import ContactMessage from '../models/contactMessage.js';
 import FAQQuestion from '../models/FAQQuestion.js';
 import mongoose from 'mongoose';
+import cloudinary from '../config/cloudinary.js';
 
 // Validate admin access
 export const validateAdminAccess = async (req, res) => {
@@ -144,28 +145,55 @@ export const getAllUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, role, isActive, search } = req.query;
     
+    console.log('getAllUsers - Raw query params:', req.query);
+    console.log('getAllUsers - Parsed params:', { page, limit, role, isActive, search });
+    
     const query = {};
-    if (role && role !== 'all') query.role = role;
-    if (isActive !== undefined) query.isActive = isActive === 'true';
-    if (search) {
+    
+    // Role filter
+    if (role && role !== 'all') {
+      query.role = role;
+    }
+    
+    // Active status filter - be more careful with conversion
+    if (isActive !== undefined && isActive !== 'all') {
+      if (isActive === 'true' || isActive === true) {
+        query.isActive = true;
+      } else if (isActive === 'false' || isActive === false) {
+        query.isActive = false;
+      }
+    }
+    
+    // Search filter
+    if (search && search.trim() !== '') {
       query.$or = [
         { username: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
     }
 
+    console.log('getAllUsers - Final MongoDB query:', JSON.stringify(query, null, 2));
+
     const users = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
 
     const total = await User.countDocuments(query);
 
+    console.log(`getAllUsers - Found ${users.length} users, total in DB matching query: ${total}`);
+    console.log('getAllUsers - First user sample:', users[0] ? { 
+      id: users[0]._id, 
+      username: users[0].username, 
+      role: users[0].role, 
+      isActive: users[0].isActive 
+    } : 'No users found');
+
     res.status(200).json({
       users,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      totalPages: Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
       total
     });
   } catch (error) {
@@ -423,6 +451,32 @@ export const deleteMovie = async (req, res) => {
   } catch (error) {
     console.error('Error deleting movie:', error);
     res.status(500).json({ message: 'Error deleting movie', error: error.message });
+  }
+};
+
+// Upload movie image to Cloudinary
+export const uploadMovieImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    // The file has been uploaded to Cloudinary via multer middleware
+    // req.file contains the Cloudinary response
+    const imageUrl = req.file.path;
+    const publicId = req.file.filename;
+
+    res.status(200).json({
+      message: 'Image uploaded successfully',
+      imageUrl: imageUrl,
+      publicId: publicId
+    });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ 
+      message: 'Error uploading image', 
+      error: error.message 
+    });
   }
 };
 

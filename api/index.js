@@ -134,6 +134,16 @@ app.use('/api/seat-generator', seatGeneratorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/stripe', stripeRoutes);
 
+// Health check endpoint for Render cold start prevention
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Cinematic Popcorn Park backend is alive!',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Schedule jobs
 // Release expired holds and check for past showtimes every minute
 cron.schedule('* * * * *', async () => {

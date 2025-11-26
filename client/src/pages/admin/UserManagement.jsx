@@ -49,11 +49,17 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
+      
       const params = new URLSearchParams({
         page: currentPage,
         limit: 10,
         ...filters
       });
+
+      console.log('Fetching users with URL:', `${backendUrl}/api/admin/users?${params}`);
+      console.log('Current user:', currentUser);
+      console.log('Current filters:', filters);
 
       const response = await axios.get(`${backendUrl}/api/admin/users?${params}`, {
         withCredentials: true
@@ -61,9 +67,31 @@ export default function UserManagement() {
 
       setUsers(response.data.users);
       setTotalPages(response.data.totalPages);
+      console.log('Successfully fetched users:', response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
-      setError(error.response?.data?.message || 'Failed to fetch users');
+      
+      // Enhanced error handling
+      if (error.response) {
+        const statusCode = error.response.status;
+        const errorMessage = error.response.data?.message || 'Failed to fetch users';
+        
+        console.log('Error response data:', error.response.data);
+        console.log('Error status:', statusCode);
+        
+        if (statusCode === 401) {
+          setError('Authentication failed. Please log in again.');
+          navigate('/sign-in');
+        } else if (statusCode === 403) {
+          setError('Access denied. Admin privileges required.');
+        } else {
+          setError(`Server error (${statusCode}): ${errorMessage}`);
+        }
+      } else if (error.request) {
+        setError('Network error: Unable to connect to server. Please check if the server is running.');
+      } else {
+        setError('Request error: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,7 +113,12 @@ export default function UserManagement() {
       setShowUserModal(false);
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Failed to update user');
+      const errorMessage = error.response?.data?.message || 'Failed to update user';
+      alert(errorMessage);
+      
+      if (error.response?.status === 401) {
+        navigate('/sign-in');
+      }
     }
   };
 
@@ -102,6 +135,10 @@ export default function UserManagement() {
     } catch (error) {
       console.error('Error fetching user bookings:', error);
       setUserBookings([]);
+      
+      if (error.response?.status === 401) {
+        navigate('/sign-in');
+      }
     }
   };
 
@@ -195,7 +232,29 @@ export default function UserManagement() {
           </div>
         </div>
 
-        {/* Users Table */}
+        {/* Error Display */}
+        {error && (
+          <div className="bg-[#E50914]/10 border border-[#E50914] text-[#E50914] p-4 rounded-lg mb-6">
+            <h3 className="font-semibold mb-2">Error loading users:</h3>
+            <p>{error}</p>
+            <button 
+              onClick={fetchUsers}
+              className="mt-2 bg-[#E50914] text-[#F5F5F5] px-4 py-2 rounded hover:bg-[#E50914]/80 transition duration-300"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Debug Info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-[#1A1A1A] border border-[#C8A951]/30 p-4 rounded-lg mb-6">
+            <h3 className="text-[#C8A951] font-semibold mb-2">Debug Info:</h3>
+            <p className="text-[#F5F5F5] text-sm">Current User: {currentUser?.username} (Role: {currentUser?.role})</p>
+            <p className="text-[#F5F5F5] text-sm">Backend URL: {backendUrl}</p>
+            <p className="text-[#F5F5F5] text-sm">Total Users Loaded: {users.length}</p>
+          </div>
+        )}
         <div className="bg-[#1A1A1A] border border-[#C8A951]/30 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -211,64 +270,90 @@ export default function UserManagement() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user._id} className="border-b border-[#F5F5F5]/10 hover:bg-[#0D0D0D]/50">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center">
-                        <img
-                          src={user.profilePicture}
-                          alt={user.username}
-                          className="w-10 h-10 rounded-full mr-3"
-                        />
-                        <span className="text-[#F5F5F5] font-medium">{user.username}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-[#F5F5F5]">{user.email}</td>
-                    <td className="py-4 px-6">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        user.role === 'admin' ? 'bg-red-500 text-white' :
-                        user.role === 'manager' ? 'bg-orange-500 text-white' :
-                        user.role === 'staff' ? 'bg-blue-500 text-white' :
-                        'bg-gray-500 text-white'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        user.isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                      }`}>
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-[#F5F5F5]">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-4 px-6 text-[#F5F5F5]">
-                      {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => viewUserDetails(user)}
-                          className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition duration-300"
-                          title="View Details"
-                        >
-                          <FaEye />
-                        </button>
-                        {currentUser.role === 'admin' && (
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <tr key={user._id} className="border-b border-[#F5F5F5]/10 hover:bg-[#0D0D0D]/50">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center">
+                          <img
+                            src={user.profilePicture}
+                            alt={user.username}
+                            className="w-10 h-10 rounded-full mr-3"
+                          />
+                          <span className="text-[#F5F5F5] font-medium">{user.username}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-[#F5F5F5]">{user.email}</td>
+                      <td className="py-4 px-6">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          user.role === 'admin' ? 'bg-red-500 text-white' :
+                          user.role === 'manager' ? 'bg-orange-500 text-white' :
+                          user.role === 'staff' ? 'bg-blue-500 text-white' :
+                          'bg-gray-500 text-white'
+                        }`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          user.isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                        }`}>
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-[#F5F5F5]">
+                        {new Date(user.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-4 px-6 text-[#F5F5F5]">
+                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex space-x-2">
                           <button
                             onClick={() => viewUserDetails(user)}
-                            className="bg-[#C8A951] text-[#0D0D0D] p-2 rounded hover:bg-[#DFBD69] transition duration-300"
-                            title="Edit User"
+                            className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition duration-300"
+                            title="View Details"
                           >
-                            <FaEdit />
+                            <FaEye />
                           </button>
-                        )}
+                          {currentUser.role === 'admin' && (
+                            <button
+                              onClick={() => viewUserDetails(user)}
+                              className="bg-[#C8A951] text-[#0D0D0D] p-2 rounded hover:bg-[#DFBD69] transition duration-300"
+                              title="Edit User"
+                            >
+                              <FaEdit />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="py-12 px-6 text-center">
+                      <div className="flex flex-col items-center">
+                        <FaUsers className="text-6xl text-[#C8A951]/30 mb-4" />
+                        <h3 className="text-xl font-semibold text-[#F5F5F5] mb-2">No Users Found</h3>
+                        <p className="text-[#F5F5F5]/70 mb-4">
+                          {filters.search || filters.role !== 'all' || filters.isActive !== 'all' 
+                            ? 'No users match the current filters. Try adjusting your search criteria.'
+                            : 'There are no users registered in the system yet.'
+                          }
+                        </p>
+                        <button
+                          onClick={() => {
+                            setFilters({ search: '', role: 'all', isActive: 'all' });
+                            setCurrentPage(1);
+                          }}
+                          className="bg-[#C8A951] text-[#0D0D0D] px-4 py-2 rounded hover:bg-[#DFBD69] transition duration-300"
+                        >
+                          Clear Filters
+                        </button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

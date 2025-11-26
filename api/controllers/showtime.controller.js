@@ -138,28 +138,39 @@ export const getShowtimesByMovie = async (req, res) => {
     const { movieId } = req.params;
     
     const currentDate = new Date();
+    // Set to start of today to include all of today's shows
+    const startOfToday = new Date(currentDate);
+    startOfToday.setHours(0, 0, 0, 0);
     
     // First check if we need to archive any expired showtimes
     await archivePastShowtimes();
     
-    // Get all valid showtimes for this movie that:
-    // 1. Are not archived
-    // 2. Have a start time in the future
-    // 3. The cutoff time has not passed
+    // Get all non-archived showtimes for this movie that are today or in the future
     const showtimes = await Showtime.find({ 
       movieId, 
       isArchived: false,
-      startTime: { $gt: currentDate } // Only future showtimes
+      date: { $gte: startOfToday } // Only today and future dates
     }).sort({ date: 1, startTime: 1 });
     
-    // Filter out showtimes where the booking cutoff has passed
-    const validShowtimes = showtimes.filter(showtime => {
+    // Add booking availability information to each showtime
+    const showtimesWithAvailability = showtimes.map(showtime => {
       const showtimeStart = new Date(showtime.startTime);
+      const showtimeEnd = new Date(showtime.endTime);
       const cutoffTime = new Date(showtimeStart.getTime() - (showtime.cutoffMinutes * 60000));
-      return currentDate <= cutoffTime;
+      
+      // Determine if booking is available
+      const bookingAvailable = currentDate <= cutoffTime && 
+                               currentDate < showtimeStart && 
+                               currentDate < showtimeEnd &&
+                               !showtime.isArchived;
+      
+      return {
+        ...showtime.toObject(),
+        bookingAvailable
+      };
     });
     
-    res.status(200).json(validShowtimes);
+    res.status(200).json(showtimesWithAvailability);
   } catch (error) {
     console.error('Error fetching showtimes for movie:', error);
     res.status(500).json({ message: 'Failed to fetch showtimes', error: error.message });

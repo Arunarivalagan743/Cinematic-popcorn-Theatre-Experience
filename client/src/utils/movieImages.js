@@ -23,6 +23,12 @@ export const getMovieImage = (movieDetails) => {
   
   console.log('Getting image for movie:', movieDetails);
   
+  // Check for Cloudinary URLs first (they start with 'https://res.cloudinary.com')
+  if (movieDetails.imageUrl && movieDetails.imageUrl.includes('cloudinary.com')) {
+    console.log('Found Cloudinary URL:', movieDetails.imageUrl);
+    return movieDetails.imageUrl;
+  }
+  
   // Check for existing imageUrl field (used in Home page)
   if (movieDetails.imageUrl && imageMap[movieDetails.imageUrl]) {
     console.log('Found imageUrl mapping:', movieDetails.imageUrl);
@@ -30,9 +36,19 @@ export const getMovieImage = (movieDetails) => {
   }
   
   // Check for poster/image fields
+  if (movieDetails.poster && movieDetails.poster.includes('cloudinary.com')) {
+    console.log('Found Cloudinary poster URL:', movieDetails.poster);
+    return movieDetails.poster;
+  }
+  
   if (movieDetails.poster && imageMap[movieDetails.poster]) {
     console.log('Found poster mapping:', movieDetails.poster);
     return imageMap[movieDetails.poster];
+  }
+  
+  if (movieDetails.image && movieDetails.image.includes('cloudinary.com')) {
+    console.log('Found Cloudinary image URL:', movieDetails.image);
+    return movieDetails.image;
   }
   
   if (movieDetails.image && imageMap[movieDetails.image]) {
