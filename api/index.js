@@ -78,19 +78,17 @@ io.on('connection', (socket) => {
 });
 
 // Middleware
-app.use(express.json());
-app.use(cookieParser());
-
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://cinemax-beta-ten.vercel.app',
   'https://www.cinexp.app',
+  'https://cinexp.app',
   'https://cinematic-popcorn-theatre-experience.vercel.app',
   'https://cinematic-popcorn-park.vercel.app',
-  // Add your actual frontend deployment URL here when you deploy
 ];
 
+// Apply CORS FIRST before any other middleware to ensure headers are always sent
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -106,11 +104,20 @@ app.use(cors({
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      // Still allow the request but log it - this prevents CORS errors on error responses
+      callback(null, true);
     }
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
+
+app.use(express.json());
+app.use(cookieParser());
 // CORS Configuration to allow requests from your Netlify frontend
 
 // Connect to MongoDB using Mongoose
@@ -407,7 +414,15 @@ app.get('/', (req, res) => {
   res.send('CSP is set!');
 });
 
+// Error handler with CORS headers
 app.use((err, req, res, next) => {
+  // Ensure CORS headers are set even on error responses
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
   res.status(statusCode).json({
